@@ -5,8 +5,10 @@ import {
   cardsThatCanTargetsSelf,
   cardsWhichTargetCards,
   hasActiveDynamite,
+  hasActiveSnake,
   IGamePlayer,
   isJailed,
+  isPlayerGhost,
   stageNames,
 } from '../../../game';
 import { PlayerHp } from '../PlayerHp';
@@ -34,17 +36,52 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
   const isReactingPlayer = ctx.activePlayers && ctx.activePlayers[player.id];
   const isPlayerJailed = isJailed(player);
   const clientPlayer = G.players[playerID!];
+  const isGhost = !!isPlayerGhost(player);
+  const clientPlayerStage = ctx.activePlayers && ctx.activePlayers[playerID!];
 
   const onPlayerClick = () => {
     if (!isActive || isActivePlayer || !playerID) return;
 
-    if (
-      clientPlayer.character.realName === 'vera custer' &&
-      ctx.activePlayers &&
-      ctx.activePlayers[playerID] === stageNames.copyCharacter
-    ) {
-      moves.copyCharacter(player.id);
-      return;
+    if (clientPlayerStage) {
+      if (
+        clientPlayer.character.realName === 'vera custer' &&
+        clientPlayerStage === stageNames.copyCharacter
+      ) {
+        moves.copyCharacter(player.id);
+        return;
+      }
+
+      if (clientPlayerStage === stageNames.fanning) {
+        const firstTargetId = ctx.playOrder.find(
+          id => !!ctx.activePlayers && ctx.activePlayers[id] === stageNames.reactToBang
+        );
+
+        if (firstTargetId === undefined) {
+          moves.endStage();
+          return;
+        }
+
+        const distanceFromFirstTarget = calculateDistanceFromTarget(
+          players,
+          ctx.playOrder,
+          firstTargetId,
+          player.id
+        );
+
+        if (player.hp <= 0) return;
+
+        if (player.id === playerID) {
+          setError(`Cannot bang yourself`);
+          return;
+        }
+
+        if (distanceFromFirstTarget > 1) {
+          setError('Target is not within 1 distance. Please choose a different target');
+          return;
+        }
+
+        moves.bang(player.id);
+      }
     }
   };
 
@@ -61,6 +98,11 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
       return;
     }
 
+    if (hasActiveSnake(sourcePlayer)) {
+      setError('Please draw for rattlesnake');
+      return;
+    }
+
     if (isJailed(sourcePlayer)) {
       setError('Please draw for jail');
       return;
@@ -73,7 +115,7 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
 
     const distanceBetweenPlayers = calculateDistanceFromTarget(
       players,
-      playersInfo,
+      ctx.playOrder,
       sourcePlayerId,
       player.id
     );
@@ -91,6 +133,16 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
       moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
       moves.makePlayerDiscardToPlay(sourceCard.name, player.id);
       setNotification('Please click on a card to discard and continue');
+      return;
+    }
+
+    if (
+      clientPlayerStage === stageNames.lemat &&
+      sourcePlayer.numBangsLeft > 0 &&
+      sourcePlayer.gunRange >= distanceBetweenPlayers
+    ) {
+      moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
+      moves.bang(player.id);
       return;
     }
 
@@ -157,9 +209,71 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
         moves.bang(player.id);
         return;
       }
+      case 'tomahawk': {
+        const reach = Math.max(sourcePlayer.actionRange, 2);
+        if (reach < distanceBetweenPlayers) {
+          setError('Target is out of range');
+          return;
+        }
+        moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
+        moves.bang(player.id);
+        return;
+      }
       case 'buffalo rifle': {
         moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
         moves.bang(player.id);
+        return;
+      }
+      case 'aim': {
+        if (sourcePlayer.gunRange < distanceBetweenPlayers) {
+          setError('Target is out of range');
+          return;
+        }
+        if (sourcePlayer.numBangsLeft <= 0) {
+          setError('You cannot play any more bangs');
+          return;
+        }
+        const bangCardIndex = sourcePlayer.hand.findIndex(card => card.name === 'bang');
+        if (bangCardIndex === -1) {
+          setError('You need a BANG! card to play this');
+          return;
+        }
+        if (bangCardIndex > sourceCardIndex) {
+          moves.playCard(bangCardIndex, player.id, sourceCardLocation);
+          moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
+        } else {
+          moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
+          moves.playCard(bangCardIndex, player.id, sourceCardLocation);
+        }
+
+        moves.bang(player.id);
+        return;
+      }
+      case 'fanning': {
+        if (sourcePlayer.gunRange < distanceBetweenPlayers) {
+          setError('Target is out of range');
+          return;
+        }
+        if (sourcePlayer.numBangsLeft <= 0) {
+          setError('You cannot play any more bangs (or fanning)');
+          return;
+        }
+        moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
+        moves.fanning(player.id);
+        return;
+      }
+      case 'ghost': {
+        if (player.hp > 0) {
+          setError('Cannot play ghost on players alive');
+          return;
+        }
+
+        moves.equipOtherPlayer(player.id, sourceCardIndex);
+        return;
+      }
+      case 'bounty':
+      case 'rattlesnake': {
+        moves.equipOtherPlayer(player.id, sourceCardIndex);
         return;
       }
       default: {
@@ -189,7 +303,7 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
     }
   }, [clientPlayer.character.realName, ctx.activePlayers, playerID, setNotification]);
 
-  if (player.hp <= 0) {
+  if (player.hp <= 0 && isGhost) {
     return <PlayerDead player={player} />;
   }
 
@@ -241,7 +355,7 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
           </div>
         )}
       </Droppable>
-      <PlayerHp hp={player.hp} maxHp={player.maxHp} />
+      <PlayerHp isGhost={isGhost} hp={player.hp} maxHp={player.maxHp} />
     </>
   );
 };

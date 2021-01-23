@@ -6,15 +6,19 @@ import {
   canPlayCardToReact,
   delayBetweenActions,
   hasActiveDynamite,
+  hasActiveSnake,
   isJailed,
   RobbingType,
   stageNames,
+  stageNameToRequiredCardsMap,
 } from '../../../game';
 import { ICard } from '../../../game';
 import { MoreOptions } from '../../shared';
 import { Card } from '../Card';
 import './DraggableCard.scss';
 import { DraggableCardContainer, DragComponentContainer } from './DraggableCard.styles';
+import { getCardInstructions } from './DraggableCard.utils';
+import Tippy from '@tippyjs/react';
 
 interface IDraggableCardProps {
   card: ICard;
@@ -35,27 +39,34 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
 }) => {
   const { moves, playerID, isActive, G, ctx } = useGameContext();
   const { selectedCards, setSelectedCards } = useCardsContext();
-  const { activeStage, players, reactionRequired } = G;
-  const { setError, setNotification } = useErrorContext();
+  const { setError } = useErrorContext();
   const [showCardOptions, setShowCardOptions] = useState(false);
+  const { players, reactionRequired } = G;
   const isClientPlayer = playerID === playerId;
-  const isCardDisabled = G.players[ctx.currentPlayer].character.name === 'belle star';
-  // || (!!activeStage &&
-  //   reactionRequired.cardNeeded.length > 0 &&
-  //   G.players[playerId].character.name !== 'calamity janet' &&
-  //   !reactionRequired.cardNeeded.includes(card.name));
+  const isCardDisabled =
+    G.players[ctx.currentPlayer].character.name === 'belle star' ||
+    (!!card.timer && cardLocation === 'green');
   const isSelected =
     (cardLocation === 'hand' && selectedCards.hand.includes(index)) ||
     (cardLocation === 'green' && selectedCards.green.includes(index));
   const selectedCardsTotalLength = selectedCards.hand.length + selectedCards.green.length;
+  const stageName = ctx.activePlayers ? (ctx.activePlayers[playerID!] as stageNames) : null;
+  const cardsNeeded =
+    stageName && stageNameToRequiredCardsMap[stageName]
+      ? stageNameToRequiredCardsMap[stageName]
+      : null;
+  const targetPlayer = players[playerId];
+  const clientPlayer = players[playerID!];
+  const isTargetPlayerTurn = playerId === playerID;
 
   const onDiscardClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.stopPropagation();
     const targetPlayer = players[playerId];
     if (playerID !== playerId) return;
+
     if (
       targetPlayer.character.name !== 'sid ketchum' &&
-      (!ctx.activePlayers || ctx.activePlayers[playerId] !== stageNames.discard)
+      (!ctx.activePlayers || ctx.activePlayers[playerID] !== stageNames.discard)
     ) {
       setError('You can only discard cards at the end of your turn');
       return;
@@ -64,37 +75,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     moves.discardFromHand(playerId, index);
   };
 
-  const onCardClick = () => {
+  const onCardClickToReact = () => {
     if (!isActive || playerID === null) return;
 
-    const targetPlayer = players[playerId];
-    const sourcePlayer = players[playerID];
-    const isTargetPlayerTurn = playerId === playerID;
-
     // Process moves when source player is different from target player
-
-    if (
-      playerID !== playerId &&
-      cardLocation === 'green' &&
-      sourcePlayer.character.name === 'pat brennan' &&
-      sourcePlayer.cardDrawnAtStartLeft >= 2 &&
-      (!ctx.activePlayers || !ctx.activePlayers[sourcePlayer.id])
-    ) {
-      if (hasActiveDynamite(sourcePlayer)) {
-        setError('Please draw for dynamite');
-        return;
-      }
-
-      if (isJailed(sourcePlayer)) {
-        setError('Please draw for jail');
-        return;
-      }
-
-      moves.patBrennanEquipmentDraw(playerId, index, cardLocation);
-      return;
-    }
-
-    if (ctx.activePlayers && ctx.activePlayers[ctx.currentPlayer] === stageNames.ragtime) {
+    if (stageName === stageNames.ragtime) {
       moves.panic(playerId, index, cardLocation);
       return;
     }
@@ -102,11 +87,19 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     // Process moves when source player is target player (current turn)
     if (!isTargetPlayerTurn) return;
 
-    if (activeStage && reactionRequired.cardNeeded.length && selectedCards && setSelectedCards) {
+    if (card.name === 'escape' && stageName !== stageNames.reactToBang) {
+      moves.discardToReact(playerId, index);
+      setTimeout(() => {
+        moves.endStage();
+      }, delayBetweenActions);
+      return;
+    }
+
+    if (cardsNeeded && selectedCards && setSelectedCards) {
       if (
         !isSelected &&
         selectedCardsTotalLength === reactionRequired.quantity - 1 &&
-        canPlayCardToReact(reactionRequired, targetPlayer, card)
+        canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded)
       ) {
         if (cardLocation === 'hand') {
           moves.playCardToReact(
@@ -152,10 +145,10 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
           }
         } else {
           if (
-            reactionRequired.cardNeeded.includes(card.name) ||
+            cardsNeeded.includes(card.name) ||
             (targetPlayer.character.name === 'calamity janet' &&
               ['bang', 'missed'].includes(card.name) &&
-              reactionRequired.cardNeeded.some(cardName => ['bang', 'missed'].includes(cardName)))
+              cardsNeeded.some(cardName => ['bang', 'missed'].includes(cardName)))
           ) {
             if (cardLocation === 'hand') {
               setSelectedCards({
@@ -176,44 +169,85 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
       }
     }
 
-    if (hasActiveDynamite(targetPlayer)) {
-      setError('Please draw for dynamite');
-      return;
-    }
-
-    if (isJailed(targetPlayer)) {
-      setError('Please draw for jail');
-      return;
+    if (
+      stageName === stageNames.joseDelgadoDiscard &&
+      targetPlayer.character.name === 'jose delgado'
+    ) {
+      if (card.type !== 'equipment') {
+        setError('Please choose a blue card to discard');
+        return;
+      }
     }
 
     if (
-      ctx.activePlayers &&
-      ctx.activePlayers[playerID] === stageNames.joseDelgadoDiscard &&
-      targetPlayer.character.name === 'jose delgado' &&
-      card.type !== 'equipment'
+      stageName === stageNames.discardToPlayCard ||
+      stageName === stageNames.joseDelgadoDiscard ||
+      stageName === stageNames.bandidos ||
+      stageName === stageNames.tornado ||
+      stageName === stageNames.poker
     ) {
-      setError('Please choose a blue card to discard');
-      return;
-    }
-
-    if (ctx.activePlayers && ctx.activePlayers[playerID] === stageNames.discardToPlayCard) {
       if (cardLocation !== 'hand') {
         setError('You can only discard from your hand');
         return;
       }
 
-      moves.discardFromHand(playerID, index);
+      switch (stageName) {
+        case stageNames.tornado: {
+          moves.discardForTornado(playerID, index);
+          break;
+        }
+        case stageNames.poker: {
+          moves.discardForPoker(playerID, index);
+          break;
+        }
+        default: {
+          moves.discardToReact(playerID, index);
+          break;
+        }
+      }
 
       if (G.reactionRequired.moveToPlayAfterDiscard) {
         const moveName = G.reactionRequired.moveToPlayAfterDiscard.replace(' ', '').toLowerCase();
 
-        if (!moves[moveName] || G.reactionRequired.targetPlayerId === undefined) {
+        if (!moves[moveName]) {
           throw Error('No move no target');
         }
 
-        moves[moveName](G.reactionRequired.targetPlayerId);
+        if (G.reactionRequired.moveArgs) {
+          moves[moveName](...G.reactionRequired.moveArgs);
+        } else {
+          moves[moveName]();
+        }
+
         return;
       }
+    }
+  };
+
+  const onCardClickToPlay = () => {
+    if (
+      playerID !== playerId &&
+      cardLocation === 'green' &&
+      clientPlayer.character.name === 'pat brennan' &&
+      clientPlayer.cardDrawnAtStartLeft >= 2
+    ) {
+      if (hasActiveDynamite(clientPlayer)) {
+        setError('Please draw for dynamite');
+        return;
+      }
+
+      if (hasActiveSnake(clientPlayer)) {
+        setError('Please draw for rattlesnake');
+        return;
+      }
+
+      if (isJailed(clientPlayer)) {
+        setError('Please draw for jail');
+        return;
+      }
+
+      moves.patBrennanEquipmentDraw(playerId, index, cardLocation);
+      return;
     }
 
     if (card.type === 'green' && cardLocation === 'hand') {
@@ -228,6 +262,21 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
 
     if (card.isTargeted) return;
 
+    if (hasActiveDynamite(targetPlayer)) {
+      setError('Please draw for dynamite');
+      return;
+    }
+
+    if (hasActiveSnake(targetPlayer)) {
+      setError('Please draw for rattlesnake');
+      return;
+    }
+
+    if (isJailed(targetPlayer)) {
+      setError('Please draw for jail');
+      return;
+    }
+
     // Equip
     if (card.type === 'equipment') {
       if (targetPlayer.equipments.find(equipment => equipment.name === card.name)) {
@@ -240,6 +289,8 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     }
 
     // Play card
+    if (card.name === 'escape') return;
+
     if (card.needsDiscard && targetPlayer.hand.length < 2) {
       setError(`You do not have enough cards to play this right now`);
       return;
@@ -254,7 +305,6 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
 
     if (card.needsDiscard) {
       moves.makePlayerDiscardToPlay(card.name, playerID);
-      setNotification('Please click on a card to discard and continue');
       return;
     }
 
@@ -267,7 +317,9 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     moves[moveName]();
 
     setTimeout(() => {
-      moves.clearCardsInPlay(playerID);
+      if (moveName !== 'bandidos') {
+        moves.clearCardsInPlay(playerID);
+      }
     }, delayBetweenActions);
   };
 
@@ -294,33 +346,35 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
         }}
       >
         {draggableDragState => (
-          <DraggableCardContainer
-            className={classnames({
-              'draggable-card': !isSelected,
-              'draggable-card-selected': isSelected && playerID === playerId,
-            })}
-            {...draggableDragState.events}
-            draggableDragState={draggableDragState}
-            cardId={card.id}
-            index={index}
-            isClientPlayer={isClientPlayer}
-            cardLocation={cardLocation}
-          >
-            <Card
-              card={card}
-              isFacedUp={isFacedUp}
-              onContextMenu={onContextMenu}
-              onClick={onCardClick}
-              disabled={isCardDisabled}
-            />
-            {showCardOptions && (
-              <MoreOptions dismiss={() => setShowCardOptions(false)}>
-                <div className='more-options-item' onClick={e => onDiscardClick(e)}>
-                  Discard
-                </div>
-              </MoreOptions>
-            )}
-          </DraggableCardContainer>
+          <Tippy delay={[500, 0]} content={`${getCardInstructions(card)}. Right click to discard`}>
+            <DraggableCardContainer
+              className={classnames({
+                'draggable-card': !isSelected,
+                'draggable-card-selected': isSelected && playerID === playerId,
+              })}
+              {...draggableDragState.events}
+              draggableDragState={draggableDragState}
+              cardId={card.id}
+              index={index}
+              isClientPlayer={isClientPlayer}
+              cardLocation={cardLocation}
+            >
+              <Card
+                card={card}
+                isFacedUp={isFacedUp}
+                onContextMenu={onContextMenu}
+                onClick={stageName ? onCardClickToReact : onCardClickToPlay}
+                disabled={isCardDisabled}
+              />
+              {showCardOptions && (
+                <MoreOptions dismiss={() => setShowCardOptions(false)}>
+                  <div className='more-options-item' onClick={e => onDiscardClick(e)}>
+                    Discard
+                  </div>
+                </MoreOptions>
+              )}
+            </DraggableCardContainer>
+          </Tippy>
         )}
       </Draggable>
       <DragComponent for={`${card.id}`}>

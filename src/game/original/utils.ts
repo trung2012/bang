@@ -1,6 +1,12 @@
 import { Ctx } from 'boardgame.io';
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { cardsThatDrawsOneWhenPlayed, cards_DodgeCity, characters_DodgeCity } from '../expansions';
+import { calculateDistanceFromTarget } from '../../utils';
+import {
+  cardsThatDrawsOneWhenPlayed,
+  cards_DodgeCity,
+  cards_VOS,
+  characters_DodgeCity,
+} from '../expansions';
 import { ExpansionName } from './config';
 import { gunRange, stageNames } from './constants';
 import {
@@ -13,17 +19,32 @@ import {
   ICharacter,
 } from './types';
 
-export const hasDynamite = (player: IGamePlayer) => {
-  return player.equipments.find(card => card.name === 'dynamite');
+export const hasEquipment = (equipmentName: CardName) => (player: IGamePlayer) =>
+  player.equipments.find(card => card.name === equipmentName);
+
+export const hasDynamite = hasEquipment('dynamite');
+
+export const isJailed = hasEquipment('jail');
+
+export const hasShotgun = hasEquipment('shotgun');
+
+export const hasLemat = hasEquipment('lemat');
+
+export const isPlayerGhost = hasEquipment('ghost');
+
+export const hasBounty = hasEquipment('bounty');
+
+export const hasSnake = hasEquipment('rattlesnake');
+
+export const hasActiveSnake = (player: IGamePlayer) => {
+  const snakeCard = hasSnake(player);
+  return snakeCard && snakeCard.timer === 0;
 };
 
 export const hasActiveDynamite = (player: IGamePlayer) => {
   const dynamiteCard = hasDynamite(player);
   return dynamiteCard && dynamiteCard.timer === 0;
 };
-
-export const isJailed = (player: IGamePlayer) =>
-  player.equipments.find(card => card.name === 'jail');
 
 export const isCharacterInGame = (G: IGameState, characterName: CharacterName) => {
   let matchingPlayerIds: string[] | undefined = undefined;
@@ -127,7 +148,7 @@ export const checkIfBeersCanSave = (G: IGameState, ctx: Ctx, targetPlayer: IGame
 export const addExpansionCards = (cards: ICard[], expansions: ExpansionName[]) => {
   const newCards = [...cards];
   if (expansions.includes('valley of shadows')) {
-    // newCards.push(...cards_VOS);
+    newCards.push(...cards_VOS);
   }
 
   if (expansions.includes('dodge city')) {
@@ -138,17 +159,13 @@ export const addExpansionCards = (cards: ICard[], expansions: ExpansionName[]) =
 };
 
 export const addExpansionCharacters = (characters: ICharacter[], expansions: ExpansionName[]) => {
+  const newCharacters = [...characters, ...characters_DodgeCity];
+
   if (expansions.includes('valley of shadows')) {
     // newCharacters.push(...characters_VOS);
   }
 
-  // if (expansions.includes('dodge city')) {
-  //   //
-  // }
-  const newCharacters = [...characters];
-  newCharacters.push(...characters_DodgeCity);
-
-  return [...newCharacters];
+  return newCharacters;
 };
 
 export const checkIfCanDrawOneAfterReacting = (
@@ -174,23 +191,20 @@ export const resetCardTimer = (card: ICard) => {
 export const canPlayCardToReact = (
   reactionRequired: {
     sourcePlayerId: string | null;
-    cardNeeded: CardName[];
     quantity: number;
     moveToPlayAfterDiscard?: CardName | null;
     targetPlayerId?: string;
   },
   reactingPlayer: IGamePlayer,
-  cardClicked: ICard
+  cardClicked: ICard,
+  cardsNeeded: CardName[]
 ) => {
   return (
-    reactionRequired.cardNeeded.includes(cardClicked.name) ||
+    cardsNeeded.includes(cardClicked.name) ||
     (reactingPlayer.character.name === 'calamity janet' &&
       ['bang', 'missed'].includes(cardClicked.name) &&
-      reactionRequired.cardNeeded.some((cardName: CardName) =>
-        ['bang', 'missed'].includes(cardName)
-      )) ||
-    (reactionRequired.cardNeeded.includes('missed') &&
-      reactingPlayer.character.name === 'elena fuente')
+      cardsNeeded.some((cardName: CardName) => ['bang', 'missed'].includes(cardName))) ||
+    (cardsNeeded.includes('missed') && reactingPlayer.character.name === 'elena fuente')
   );
 };
 
@@ -307,4 +321,33 @@ export const getNextPlayerToPassEquipments = (G: IGameState, ctx: Ctx) => {
     nextPlayerPos = (nextPlayerPos + 1) % ctx.playOrder.length;
   } while (G.players[nextPlayerPos.toString()].hp <= 0);
   return nextPlayerPos;
+};
+
+export const isAnyPlayerWithinOneRange = (G: IGameState, ctx: Ctx, playerId: string) => {
+  for (const id of ctx.playOrder) {
+    const player = G.players[id];
+    if (playerId !== id && !isPlayerGhost(player) && player.hp > 0 && id !== ctx.currentPlayer) {
+      const distance = calculateDistanceFromTarget(G.players, ctx.playOrder, playerId, id);
+
+      if (distance <= 1) return true;
+    }
+  }
+
+  return false;
+};
+
+export const getPlayerIdsNotTarget = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  return ctx.playOrder.filter(id => id !== targetPlayerId);
+};
+
+export const getPlayersNotTargetPlayer = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  return ctx.playOrder
+    .map(id => G.players[id])
+    .filter(player => player.hp > 0 && player.id !== targetPlayerId);
+};
+
+export const getPlayerWithSaved = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  const playersNotTarget = getPlayersNotTargetPlayer(G, ctx, targetPlayerId);
+
+  return playersNotTarget.find(card => card.name === 'saved');
 };

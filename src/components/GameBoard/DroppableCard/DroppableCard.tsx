@@ -4,6 +4,7 @@ import {
   cardsWhichTargetCards,
   cardsWithNoRangeLimit,
   hasActiveDynamite,
+  hasActiveSnake,
   ICard,
   isJailed,
   RobbingType,
@@ -30,8 +31,8 @@ export type CardContainerProps = {
 };
 
 export const DroppableCardContainer = styled.div<{ isCurrentPlayer: boolean }>`
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   &:hover {
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     transform: ${props => `${props.isCurrentPlayer ? 'translateY(-3rem)' : 'translateY(2rem)'} `};
     z-index: 11;
   }
@@ -45,12 +46,11 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
   cardLocation,
   onClick,
 }) => {
-  const { G, playersInfo, moves, playerID } = useGameContext();
+  const { G, ctx, moves, playerID } = useGameContext();
   const { setError, setNotification } = useErrorContext();
   const { players } = G;
 
   const onDrop = (data: IDraggableCardData) => {
-    if (!playersInfo?.length) throw Error('Something went wrong');
     const { sourceCard, sourceCardIndex, sourcePlayerId, sourceCardLocation } = data;
     const sourcePlayer = players[sourcePlayerId];
 
@@ -58,6 +58,11 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
 
     if (hasActiveDynamite(sourcePlayer)) {
       setError('Please draw for dynamite');
+      return;
+    }
+
+    if (hasActiveSnake(sourcePlayer)) {
+      setError('Please draw for rattlesnake');
       return;
     }
 
@@ -78,7 +83,7 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
 
     const distanceBetweenPlayers = calculateDistanceFromTarget(
       players,
-      playersInfo,
+      ctx.playOrder,
       sourcePlayerId,
       playerId
     );

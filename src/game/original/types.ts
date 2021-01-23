@@ -5,19 +5,22 @@ export interface IGameState {
   deck: ICard[];
   discarded: ICard[];
   generalStore: ICard[];
-  generalStoreOrder: string[];
+  reactingOrder: string[];
   players: IGamePlayerMap;
   playOrder: string[];
   characters: ICharacter[];
-  activeStage: string | null;
   reactionRequired: {
     sourcePlayerId: string | null;
-    cardNeeded: CardName[];
     quantity: number;
     moveToPlayAfterDiscard?: CardName | null;
-    targetPlayerId?: string;
+    moveArgs?: any[];
   };
   expansions: ExpansionName[];
+  savedState?: {
+    savedPlayerId: string;
+    savingPlayerId?: string;
+    previousStages: { [key: string]: string } | null;
+  };
 }
 
 export interface IGamePlayerMap {

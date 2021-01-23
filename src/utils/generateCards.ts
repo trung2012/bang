@@ -1,5 +1,4 @@
 import { CardName, CardSuit, CardType, ICard, ICardsToGenerate } from '../game';
-import { CardNameExpansion } from '../game/expansions/types';
 
 const { nanoid } = require('nanoid');
 const fs = require('fs');
@@ -233,6 +232,7 @@ const cardsToGenerate_VOS: ICardsToGenerate = {
       values: {
         hearts: [7],
       },
+      timer: 0,
     },
     {
       name: 'shotgun',
@@ -663,7 +663,13 @@ const targetedCards: CardName[] = [
 
 const cardsThatNeedDiscard: CardName[] = ['rag time', 'springfield', 'tequila', 'whisky', 'brawl'];
 
-const playWithBangCards: CardName[] = ['aim'];
+const cardsToPlayWithBang: CardName[] = ['aim'];
+interface ISupplementaryCard {
+  name: CardName;
+  cardsToPlayWith: CardName[];
+}
+
+// const supplementaryCards: ISupplementaryCard[] = [];
 
 const generateCards = (cardsToGenerate: ICardsToGenerate, type: string) => {
   fs.appendFileSync(
@@ -683,7 +689,7 @@ const generateCards = (cardsToGenerate: ICardsToGenerate, type: string) => {
         const range = values[suit];
 
         if (range.length <= 1) {
-          const cardsToPush = range.map((value: number) => ({
+          const cardsToPush: ICard[] = range.map((value: number) => ({
             id: nanoid(),
             value,
             name: card.name,
@@ -693,7 +699,7 @@ const generateCards = (cardsToGenerate: ICardsToGenerate, type: string) => {
             isTargeted: targetedCards.includes(card.name),
           }));
 
-          if (playWithBangCards.includes(card.name)) {
+          if (cardsToPlayWithBang.includes(card.name)) {
             cardsToPush[0].playWithBang = true;
           }
 
@@ -719,12 +725,12 @@ const generateCards = (cardsToGenerate: ICardsToGenerate, type: string) => {
               isTargeted: targetedCards.includes(card.name),
             };
 
-            if (playWithBangCards.includes(card.name)) {
-              card.playWithBang = true;
+            if (cardsToPlayWithBang.includes(card.name)) {
+              newCard.playWithBang = true;
             }
 
             if (cardsThatNeedDiscard.includes(card.name)) {
-              card.needsDiscard = true;
+              newCard.needsDiscard = true;
             }
 
             if (card.timer !== undefined) {

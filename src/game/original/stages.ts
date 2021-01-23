@@ -5,14 +5,15 @@ import { IGameState } from './types';
 const stages: StageMap<IGameState> = {
   discardToPlayCard: {
     moves: {
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
       resetGameStage: moves.resetGameStage,
       clearCardsInPlay: moves.clearCardsInPlay,
+      endStage: moves.endStage,
     },
   },
   joseDelgadoDiscard: {
     moves: {
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
       resetGameStage: moves.resetGameStage,
       clearCardsInPlay: moves.clearCardsInPlay,
     },
@@ -27,7 +28,8 @@ const stages: StageMap<IGameState> = {
     moves: {
       playCardToReact: moves.playCardToReact,
       takeDamage: moves.takeDamage,
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
+      endStage: moves.endStage,
     },
   },
   reactToGatling: {
@@ -37,7 +39,8 @@ const stages: StageMap<IGameState> = {
       drawToReact: moves.drawToReact,
       barrelResult: moves.barrelResult,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
+      endStage: moves.endStage,
     },
   },
   reactToIndians: {
@@ -45,7 +48,8 @@ const stages: StageMap<IGameState> = {
       playCardToReact: moves.playCardToReact,
       takeDamage: moves.takeDamage,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
+      endStage: moves.endStage,
     },
   },
   reactToBang: {
@@ -55,7 +59,19 @@ const stages: StageMap<IGameState> = {
       barrelResult: moves.barrelResult,
       takeDamage: moves.takeDamage,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardFromHand: moves.discardFromHand,
+      discardToReact: moves.discardToReact,
+      setActivePlayersStage: moves.setActivePlayersStage,
+    },
+  },
+  reactToBangWithoutBang: {
+    moves: {
+      playCardToReact: moves.playCardToReact,
+      drawToReact: moves.drawToReact,
+      barrelResult: moves.barrelResult,
+      takeDamage: moves.takeDamage,
+      clearCardsInPlay: moves.clearCardsInPlay,
+      discardToReact: moves.discardToReact,
+      endStage: moves.endStage,
     },
   },
   takeCardFromHand: {
@@ -84,6 +100,47 @@ const stages: StageMap<IGameState> = {
   copyCharacter: {
     moves: {
       copyCharacter: moves.copyCharacter,
+    },
+  },
+  bandidos: {
+    moves: {
+      takeDamage: moves.takeDamage,
+      discardToReact: moves.discardToReact,
+      clearCardsInPlay: moves.clearCardsInPlay,
+      endStage: moves.endStage,
+    },
+  },
+  fanning: {
+    moves: {
+      bang: moves.bang,
+      endStage: moves.endStage,
+    },
+  },
+  tornado: {
+    moves: {
+      discardForTornado: moves.discardForTornado,
+      endStage: moves.endStage,
+    },
+  },
+  poker: {
+    moves: {
+      discardForPoker: moves.discardForPoker,
+    },
+  },
+  pickCardForPoker: {
+    moves: {
+      pickCardForPoker: moves.pickCardForPoker,
+    },
+  },
+  lemat: {
+    moves: {
+      bang: moves.bang,
+      playCard: moves.playCard,
+    },
+  },
+  saved: {
+    moves: {
+      saveAnotherPlayer: moves.saveAnotherPlayer,
     },
   },
 };
