@@ -133,16 +133,16 @@ export const cards_VOS: ICard[] = [
     type: 'action',
     isTargeted: false,
   },
-  // {
-  //   id: 'Z3EswuCwZ4I2PXp84V8ZT',
-  //   value: 5,
-  //   name: 'saved',
-  //   imageUrl:
-  //     'https://res.cloudinary.com/trungpham/image/upload/v1606888441/bang/valley%20of%20shadows/07_salvo_ee8b1m.png',
-  //   suit: 'hearts',
-  //   type: 'action',
-  //   isTargeted: true,
-  // },
+  {
+    id: 'Z3EswuCwZ4I2PXp84V8ZT',
+    value: 5,
+    name: 'saved',
+    imageUrl:
+      'https://res.cloudinary.com/trungpham/image/upload/v1606888441/bang/valley%20of%20shadows/07_salvo_ee8b1m.png',
+    suit: 'hearts',
+    type: 'action',
+    isTargeted: true,
+  },
   {
     id: 'k3FiuLJHWCbq-DKLRgiPu',
     value: 14,

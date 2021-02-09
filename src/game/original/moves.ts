@@ -971,19 +971,19 @@ const pickCardFromGeneralStore = (
   generalStoreCardIndex: number,
   targetPlayerId: string
 ) => {
-  const currentPlayer = G.players[targetPlayerId];
+  const targetPlayer = G.players[targetPlayerId];
   const selectedCard = G.generalStore.splice(generalStoreCardIndex, 1)[0];
 
-  currentPlayer.hand.push(selectedCard);
-  currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
+  targetPlayer.hand.push(selectedCard);
+  targetPlayer.hand = shuffle(ctx, targetPlayer.hand);
+
+  if (ctx.activePlayers && Object.keys(ctx.activePlayers).length === 1) {
+    resetGameStage(G, ctx);
+  }
 
   if (ctx.events?.endStage) {
     ctx.events.endStage();
     G.reactingOrder.shift();
-  }
-
-  if (ctx.activePlayers && Object.keys(ctx.activePlayers).length === 1) {
-    resetGameStage(G, ctx);
   }
 };
 
@@ -1007,6 +1007,7 @@ const resetGameStage = (G: IGameState, ctx: Ctx) => {
     quantity: 1,
     sourcePlayerId: null,
   };
+  G.brawlPlayersToDiscard = {};
 };
 
 const discardHand = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
@@ -1029,8 +1030,22 @@ const discardEquipments = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   }
 };
 
+const discardGreenEquipments = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  const targetPlayer = G.players[targetPlayerId ?? ctx.currentPlayer];
+  while (targetPlayer.equipmentsGreen.length > 0) {
+    const discarded = targetPlayer.equipments.pop();
+    if (discarded) {
+      G.discarded.push(discarded);
+    }
+  }
+};
+
 export const doNothing = (G: IGameState, ctx: Ctx) => {
   return G;
+};
+
+export const endturn = (G: IGameState, ctx: Ctx) => {
+  endTurn(G, ctx);
 };
 
 export const endTurn = (G: IGameState, ctx: Ctx) => {
@@ -1067,6 +1082,8 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
   if (currentPlayer.character.name === 'jose delgado') {
     currentPlayer.character.activePowerUsesLeft = 2;
   }
+
+  resetDiscardStage(G, ctx);
 };
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
@@ -1155,17 +1172,20 @@ export const makePlayerDiscardToPlay = (
   G: IGameState,
   ctx: Ctx,
   cardName: CardName,
-  targetPlayerId?: string
+  targetPlayerId?: string,
+  numCards?: number
 ) => {
   if (ctx.events?.setActivePlayers) {
     ctx.events.setActivePlayers({
-      currentPlayer: stageNames.discardToPlayCard,
-      moveLimit: 1,
+      value: {
+        [targetPlayerId ?? ctx.currentPlayer]: stageNames.discardToPlayCard,
+      },
+      moveLimit: numCards ?? 1,
     });
   }
 
   G.reactionRequired.moveToPlayAfterDiscard = cardName;
-  G.reactionRequired.moveArgs = [targetPlayerId];
+  G.reactionRequired.moveArgs = [targetPlayerId ?? ctx.currentPlayer];
 };
 
 export const ragtime = (G: IGameState, ctx: Ctx) => {
@@ -1203,19 +1223,32 @@ export const whisky = (G: IGameState, ctx: Ctx) => {
 };
 
 export const brawl = (G: IGameState, ctx: Ctx) => {
-  const otherPlayersStages = getOtherPlayersAliveStages(G, ctx, stageNames.discardToPlayCard);
+  const otherPlayersAlive = getOtherPlayersAlive(G, ctx);
+  const activePlayers = otherPlayersAlive.reduce((players, player) => {
+    players[player.id] = true;
+    return players;
+  }, {} as { [key: string]: any });
 
   if (ctx.events?.setActivePlayers) {
     ctx.events.setActivePlayers({
-      value: {
-        ...otherPlayersStages,
-      },
-      moveLimit: 1,
+      currentPlayer: stageNames.pickCardsForBrawl,
+      moveLimit: otherPlayersAlive.length,
     });
   }
 
-  resetDiscardStage(G, ctx);
-  clearCardsInPlay(G, ctx, ctx.currentPlayer);
+  G.brawlPlayersToDiscard = {
+    ...activePlayers,
+  };
+};
+
+export const pickCardsForBrawl = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  targetCardIndex: number
+) => {
+  catbalou(G, ctx, targetPlayerId, targetCardIndex, 'hand');
+  G.brawlPlayersToDiscard[targetPlayerId] = false;
 };
 
 export const cancan = (
@@ -1478,6 +1511,10 @@ export const discardForPoker = (
   const targetPlayer = G.players[targetPlayerId];
   const discardedCard = targetPlayer.hand.splice(targetCardIndex, 1)[0];
 
+  if (discardedCard) {
+    G.generalStore.push(discardedCard);
+  }
+
   if (ctx.activePlayers && Object.keys(ctx.activePlayers).length === 1) {
     const wasAnyAceDiscarded = G.generalStore.some(card => card.value === 14);
     const otherPlayersAlive = getOtherPlayersAlive(G, ctx);
@@ -1491,13 +1528,17 @@ export const discardForPoker = (
 
         G.reactingOrder = [ctx.currentPlayer];
       }
+    } else {
+      while (G.generalStore.length > 0) {
+        const cardToDiscard = G.generalStore.pop();
+
+        if (cardToDiscard) {
+          G.discarded.push(cardToDiscard);
+        }
+      }
     }
 
     endStage(G, ctx);
-  }
-
-  if (discardedCard) {
-    G.generalStore.push(discardedCard);
   }
 };
 
@@ -1512,6 +1553,14 @@ export const pickCardForPoker = (
 
   currentPlayer.hand.push(selectedCard);
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
+
+  while (G.generalStore.length > 0) {
+    const cardToDiscard = G.generalStore.pop();
+
+    if (cardToDiscard) {
+      G.discarded.push(cardToDiscard);
+    }
+  }
 };
 
 export const lemat = (G: IGameState, ctx: Ctx) => {
@@ -1542,6 +1591,26 @@ export const putPlayersInSavedState = (G: IGameState, ctx: Ctx, targetPlayerId: 
   }
 };
 
+export const putInBeingRobbedStage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  if (ctx.events?.setActivePlayers) {
+    ctx.events?.setActivePlayers({
+      value: {
+        [targetPlayerId]: stageNames.reactToRobbery,
+      },
+    });
+  }
+};
+
+export const giveCardToRobber = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  targetCardIndex: number,
+  type: RobbingType
+) => {
+  panic(G, ctx, targetPlayerId, targetCardIndex, type);
+};
+
 export const moves_VOS: MoveMap<IGameState> = {
   lastcall,
   snakeResult,
@@ -1554,6 +1623,7 @@ export const moves_VOS: MoveMap<IGameState> = {
   pickCardForPoker,
   lemat,
   putPlayersInSavedState,
+  putInBeingRobbedStage,
 };
 
 export const moves_DodgeCity: MoveMap<IGameState> = {
@@ -1577,6 +1647,7 @@ export const moves_DodgeCity: MoveMap<IGameState> = {
   joseDelgadoPower,
   josedelgadodraw,
   copyCharacter,
+  pickCardsForBrawl,
 };
 
 export const moves: MoveMap<IGameState> = {
@@ -1616,8 +1687,10 @@ export const moves: MoveMap<IGameState> = {
   drawToReact,
   drawBounty,
   discardEquipments,
+  discardGreenEquipments,
   makePlayerDiscard,
   endTurn,
+  endturn,
   endStage,
   reselectCharacter,
   discardToReact,
