@@ -33,7 +33,7 @@
     "server": "ts-node-dev --ignore-watch ./src ./server.js",
     "client": "react-scripts start",
     "dev": "concurrently \"yarn run server\" \"yarn run client\" ",
-    "start": "node ./server.js",
+    "start": "node --experimental-specifier-resolution=node ./server.js",
     "generate": "ts-node-dev ./src/utils/generateCards.ts"
   },
   "eslintConfig": {
