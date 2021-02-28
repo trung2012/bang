@@ -24,7 +24,8 @@
     "react-scripts": "3.4.3",
     "react-toastify": "^6.1.0",
     "use-sound": "^2.0.1",
-    "ts-node": "^9.0.0"
+    "ts-node": "^9.0.0",
+    "typescript": "3.9.7"
   },
   "scripts": {
     "build": "react-scripts build && gzipper compress --exclude mp3,jpg,ico,png,svg ./build",
@@ -33,7 +34,7 @@
     "server": "ts-node-dev --ignore-watch ./src ./server.js",
     "client": "react-scripts start",
     "dev": "concurrently \"yarn run server\" \"yarn run client\" ",
-    "start": "ts-node-transpile-only ./server.ts",
+    "start": "ts-node --transpile-only ./server.ts",
     "generate": "ts-node-dev ./src/utils/generateCards.ts"
   },
   "eslintConfig": {
@@ -64,7 +65,6 @@
     "concurrently": "^5.3.0",
     "gzipper": "^4.3.0",
     "ts-node-dev": "^1.0.0-pre.65",
-    "typescript": "3.9.7",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2"
