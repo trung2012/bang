@@ -169,7 +169,7 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
               <DamageIcon className='player-button-icon damage-icon' />
             </PlayerButton>
           )}
-          {playerCurrentStage === stageNames.discard && isActive && (
+          {playerCurrentStage in [stageNames.discard, stageNames.discardToPlayCard] && isActive && (
             <PlayerButton tooltipTitle='Cancel' onClick={() => moves.endStage()}>
               <CancelIcon className='player-button-icon damage-icon' />
             </PlayerButton>
