@@ -141,12 +141,7 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
             }));
           }
         } else {
-          if (
-            cardsNeeded.includes(card.name) ||
-            (targetPlayer.character.name === 'calamity janet' &&
-              ['bang', 'missed'].includes(card.name) &&
-              cardsNeeded.some(cardName => ['bang', 'missed'].includes(cardName)))
-          ) {
+          if (canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded)) {
             if (cardLocation === 'hand') {
               setSelectedCards({
                 hand: [...selectedCards.hand, index],
