@@ -15,11 +15,18 @@ export interface IGameState {
     moveToPlayAfterDiscard?: CardName | null;
     moveArgs?: any[];
   };
+  robberyState: {
+    robberId: string;
+    victimId: string;
+    cardIndex: number;
+    move: string;
+    type: RobbingType;
+  } | null;
   expansions: ExpansionName[];
   savedState?: {
     savedPlayerId: string;
     savingPlayerId?: string;
-    previousStages: { [key: string]: string } | null;
+    previousStages: Record<string, string> | null;
   };
   brawlPlayersToDiscard: {
     [playerId: string]: boolean;

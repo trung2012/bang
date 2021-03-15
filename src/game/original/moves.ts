@@ -850,6 +850,12 @@ const catbalou = (
   resetCardTimer(cardToDiscard);
 
   G.discarded.push(cardToDiscard);
+
+  if (G.robberyState) {
+    G.robberyState = null;
+    clearCardsInPlay(G, ctx, targetPlayerId);
+    endStage(G, ctx);
+  }
 };
 
 const gatling = (G: IGameState, ctx: Ctx) => {
@@ -1594,7 +1600,14 @@ export const putPlayersInSavedState = (G: IGameState, ctx: Ctx, targetPlayerId: 
   }
 };
 
-export const putInBeingRobbedStage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+export const putInBeingRobbedStage = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  targetCardIndex: number,
+  type: RobbingType,
+  cardName: CardName
+) => {
   if (ctx.events?.setActivePlayers) {
     ctx.events?.setActivePlayers({
       value: {
@@ -1602,16 +1615,36 @@ export const putInBeingRobbedStage = (G: IGameState, ctx: Ctx, targetPlayerId: s
       },
     });
   }
+
+  G.robberyState = {
+    robberId: ctx.currentPlayer,
+    victimId: targetPlayerId,
+    cardIndex: targetCardIndex,
+    type,
+    move: cardName,
+  };
 };
 
 export const giveCardToRobber = (
   G: IGameState,
   ctx: Ctx,
-  targetPlayerId: string,
   targetCardIndex: number,
   type: RobbingType
 ) => {
-  panic(G, ctx, targetPlayerId, targetCardIndex, type);
+  if (!G.robberyState) return INVALID_MOVE;
+  const targetPlayer = G.players[G.robberyState.victimId];
+  const robber = G.players[G.robberyState.robberId];
+  ctx.effects.panic();
+
+  const cardToTake = processCardRemoval(targetPlayer, targetCardIndex, type);
+  resetCardTimer(cardToTake);
+  robber.hand.push(cardToTake);
+  robber.hand = shuffle(ctx, robber.hand);
+
+  endStage(G, ctx);
+  G.robberyState = null;
+  clearCardsInPlay(G, ctx, targetPlayer.id);
+  clearCardsInPlay(G, ctx, robber.id);
 };
 
 export const moves_VOS: MoveMap<IGameState> = {
@@ -1627,6 +1660,7 @@ export const moves_VOS: MoveMap<IGameState> = {
   lemat,
   putPlayersInSavedState,
   putInBeingRobbedStage,
+  giveCardToRobber,
 };
 
 export const moves_DodgeCity: MoveMap<IGameState> = {

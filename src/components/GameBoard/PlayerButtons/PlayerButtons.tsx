@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
 import { PlayerButton } from './PlayerButton';
 import { ReactComponent as PassIcon } from '../../../assets/pass.svg';
+import { ReactComponent as SkipIcon } from '../../../assets/skip.svg';
 import { ReactComponent as PowerIcon } from '../../../assets/power.svg';
 import { ReactComponent as DamageIcon } from '../../../assets/damage.svg';
 import { ReactComponent as CancelIcon } from '../../../assets/cancel.svg';
@@ -134,10 +135,11 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
   const onPassClick = () => {
     if (!isClientPlayer) return;
 
-    if (playerCurrentStage === stageNames.reactToRobbery) {
-      if (G.reactionRequired.moveToPlayAfterDiscard === 'cat balou') {
+    if (playerCurrentStage === stageNames.reactToRobbery && G.robberyState) {
+      if (G.robberyState.move === 'cat balou') {
+        moves.catbalou(G.robberyState.victimId, G.robberyState.cardIndex, G.robberyState.type);
       } else {
-        moves.giveCardToRobber(ctx.currentPlayer);
+        moves.giveCardToRobber(G.robberyState.cardIndex, G.robberyState.type);
       }
     }
   };
@@ -148,9 +150,9 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
 
   return (
     <div className='player-buttons'>
-      {isClientPlayer && (
+      {isClientPlayer && isActive && (
         <>
-          {player.character.hasActivePower && isActive && (
+          {player.character.hasActivePower && (
             <PlayerButton
               tooltipTitle='Activate your power'
               onClick={onPowerClick}
@@ -169,14 +171,14 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
               <DamageIcon className='player-button-icon damage-icon' />
             </PlayerButton>
           )}
-          {playerCurrentStage in [stageNames.discard, stageNames.discardToPlayCard] && isActive && (
+          {playerCurrentStage in [stageNames.discard, stageNames.discardToPlayCard] && (
             <PlayerButton tooltipTitle='Cancel' onClick={() => moves.endStage()}>
               <CancelIcon className='player-button-icon damage-icon' />
             </PlayerButton>
           )}
-          {playerCurrentStage === stageNames.reactToRobbery && isActive && (
-            <PlayerButton tooltipTitle='Cancel' onClick={onPassClick}>
-              <CancelIcon className='player-button-icon damage-icon' />
+          {playerCurrentStage === stageNames.reactToRobbery && (
+            <PlayerButton tooltipTitle='Pass' onClick={onPassClick}>
+              <SkipIcon className='player-button-icon' />
             </PlayerButton>
           )}
         </>

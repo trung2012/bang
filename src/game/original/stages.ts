@@ -149,7 +149,8 @@ const stages: StageMap<IGameState> = {
       playCardToReact: moves.playCardToReact,
       giveCardToRobber: moves.giveCardToRobber,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardToReact: moves.discardToReact,
+      catbalou: moves.catbalou,
+      endStage: moves.endStage,
     },
   },
   [stageNames.pickCardsForBrawl]: {

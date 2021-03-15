@@ -50,6 +50,7 @@ const setup = (ctx: Ctx, setupData: ISetupData) => {
     moveToPlayAfterDiscard: null,
   };
   const brawlPlayersToDiscard = {};
+  const robberyState = null;
 
   // Create players
   for (const playerId of ctx.playOrder) {
@@ -95,6 +96,7 @@ const setup = (ctx: Ctx, setupData: ISetupData) => {
     expansions,
     characters: charactersShuffled,
     brawlPlayersToDiscard,
+    robberyState,
   } as IGameState;
 };
 

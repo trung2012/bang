@@ -114,7 +114,7 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
         }, delayBetweenActions);
         return;
       } else {
-        moves.putInBeingRobbedStage(playerId);
+        moves.putInBeingRobbedStage(playerId, index, cardLocation, sourceCard.name);
       }
     } else {
       setError('Target player is out of range');
