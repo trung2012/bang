@@ -157,6 +157,7 @@ export enum RoleOrder {
 export const gameRolesByNumPlayers: ILookup = {
   // number of [sheriff, renegade, outlaws, deputy]
   2: [1, 1, 0, 0],
+  3: [1, 1, 1, 0],
   4: [1, 1, 2, 0],
   5: [1, 1, 2, 1],
   6: [1, 1, 3, 1],
@@ -279,4 +280,4 @@ export const roleImageSrcLookup = {
 
 export const bangExpansions: ExpansionName[] = ['valley of shadows', 'dodge city'];
 
-export const bangNumPlayers = [2, 4, 5, 6, 7, 8];
+export const bangNumPlayers = [2, 3, 4, 5, 6, 7, 8];

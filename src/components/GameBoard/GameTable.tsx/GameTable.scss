@@ -35,6 +35,12 @@
   @include player1(2);
 }
 
+.game-table--3-players {
+  @include player0;
+  @include player1(3);
+  @include player2(3);
+}
+
 .game-table--4-players {
   @include player0;
   @include player1(4);
