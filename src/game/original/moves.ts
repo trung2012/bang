@@ -67,7 +67,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     cardCausingDamage.name === 'bang'
   ) {
     if (hasBounty(targetPlayer)) {
-      drawOneFromDeck(G, ctx); // Only current player can draw
+      drawFromDeck(G, ctx, 1); // Only current player can draw
     }
 
     if (doesCurrentPlayerHasShotgun) {
@@ -586,31 +586,12 @@ const jail = (G: IGameState, ctx: Ctx, targetPlayerId: string, jailCardIndex: nu
   ctx.effects.jail();
 };
 
-const drawOneFromDeck = (G: IGameState, ctx: Ctx) => {
+const drawFromDeck = (G: IGameState, ctx: Ctx, numberOfCards: number) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  const newCard = G.deck.pop();
-  if (newCard) {
-    currentPlayer.hand.push(newCard);
-  }
-  currentPlayer.cardDrawnAtStartLeft -= 1;
-  currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-};
-
-const drawTwoFromDeck = (G: IGameState, ctx: Ctx) => {
-  const currentPlayer = G.players[ctx.currentPlayer];
-  const newCards: ICard[] = G.deck.slice(G.deck.length - 2, G.deck.length);
-  G.deck = G.deck.slice(0, G.deck.length - 2);
+  const newCards: ICard[] = G.deck.slice(G.deck.length - numberOfCards, G.deck.length);
+  G.deck = G.deck.slice(0, G.deck.length - numberOfCards);
   currentPlayer.hand.push(...newCards);
-  currentPlayer.cardDrawnAtStartLeft -= 2;
-  currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-};
-
-const drawThreeFromDeck = (G: IGameState, ctx: Ctx) => {
-  const currentPlayer = G.players[ctx.currentPlayer];
-  const newCards: ICard[] = G.deck.slice(G.deck.length - 3, G.deck.length);
-  G.deck = G.deck.slice(0, G.deck.length - 3);
-  currentPlayer.hand.push(...newCards);
-  currentPlayer.cardDrawnAtStartLeft = 0;
+  currentPlayer.cardDrawnAtStartLeft -= numberOfCards;
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 };
 
@@ -716,7 +697,7 @@ const blackJackResult = (G: IGameState, ctx: Ctx) => {
     currentPlayer.cardsInPlay[0].suit === 'hearts' ||
     currentPlayer.cardsInPlay[0].suit === 'diamond'
   ) {
-    drawOneFromDeck(G, ctx);
+    drawFromDeck(G, ctx, 1);
   }
 
   let cardFlipped = currentPlayer.cardsInPlay.pop();
@@ -1316,15 +1297,10 @@ export const canteen = (G: IGameState, ctx: Ctx) => {
 
 export const billNoFaceDraw = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  drawOneFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 1);
   const lostHp = currentPlayer.maxHp - currentPlayer.hp;
 
-  if (currentPlayer.character.name === 'bill noface') {
-    const newCards: ICard[] = G.deck.slice(G.deck.length - lostHp, G.deck.length);
-    G.deck = G.deck.slice(0, G.deck.length - lostHp);
-    currentPlayer.hand.push(...newCards);
-    currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-  }
+  drawFromDeck(G, ctx, lostHp);
 
   currentPlayer.cardDrawnAtStartLeft = 0;
 };
@@ -1332,7 +1308,7 @@ export const billNoFaceDraw = (G: IGameState, ctx: Ctx) => {
 export const chuckWengamPower = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   currentPlayer.hp -= 1;
-  drawTwoFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 2);
 };
 
 export const patBrennanEquipmentDraw = (
@@ -1370,7 +1346,7 @@ export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
 };
 
 export const josedelgadodraw = (G: IGameState, ctx: Ctx) => {
-  drawTwoFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 2);
 };
 
 // Valley of shadows
@@ -1803,9 +1779,7 @@ export const moves_DodgeCity: MoveMap<IGameState> = {
 
 export const moves: MoveMap<IGameState> = {
   takeDamage,
-  drawOneFromDeck,
-  drawTwoFromDeck,
-  drawThreeFromDeck,
+  drawFromDeck,
   barrelResult,
   drawFromPlayerHand,
   discardFromHand,
