@@ -60,9 +60,26 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           });
           break;
         }
+        case stageNames.continueAfterHenryBlockBang: {
+          const moveName = G.henryBlockAfterEffects?.move;
+          const moveArgs = G.henryBlockAfterEffects?.moveArgs;
+
+          if (isActive && moveName && moves[moveName] && moveArgs) {
+            moves[moveName](...moveArgs);
+            return;
+          }
+        }
       }
     }
-  }, [playerCurrentStage, playerID, setModalContent, setNotification]);
+  }, [
+    G.henryBlockAfterEffects,
+    isActive,
+    moves,
+    playerCurrentStage,
+    playerID,
+    setModalContent,
+    setNotification,
+  ]);
 
   const onEndTurnClick = () => {
     if (!isClientPlayer || !isActive) {

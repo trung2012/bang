@@ -1,5 +1,5 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { ActivePlayersArg, Ctx, MoveMap } from 'boardgame.io';
+import { ActivePlayersArg, Ctx } from 'boardgame.io';
 import {
   charactersWithBangPower,
   gunRange,
@@ -36,6 +36,10 @@ import {
 } from './utils';
 import { SelectedCards } from '../../context';
 import { cardsActivatingMollyStarkPower } from '../expansions';
+
+const resetHenryBlockEffects = (G: IGameState) => {
+  G.henryBlockAfterEffects = undefined;
+};
 
 const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   if (!targetPlayerId) return INVALID_MOVE;
@@ -193,6 +197,10 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
       if (cardToDrawFromHand) {
         targetPlayer.hand.push(cardToDrawFromHand);
       }
+    }
+
+    if (G.henryBlockAfterEffects) {
+      continueAfterHenryBlockBang(G, ctx);
     }
   }
 
@@ -476,6 +484,10 @@ export const playCardToReact = (
 
   endStage(G, ctx);
 
+  if (G.henryBlockAfterEffects) {
+    continueAfterHenryBlockBang(G, ctx);
+  }
+
   // If you can play card to react, you passed the stage and can now be attacked again
   reactingPlayer.barrelUseLeft = 1;
   if (reactingPlayer.character.name === 'jourdonnais') {
@@ -679,6 +691,10 @@ const drawFromPlayerHand = (
   }
 
   endStage(G, ctx);
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 const blackJackDraw = (G: IGameState, ctx: Ctx) => {
@@ -749,6 +765,10 @@ export const barrelResult = (
     }
 
     ctx.effects.missed();
+
+    if (G.henryBlockAfterEffects) {
+      continueAfterHenryBlockBang(G, ctx);
+    }
   }
 };
 
@@ -865,6 +885,10 @@ const catbalou = (
     clearCardsInPlay(G, ctx, targetPlayerId);
     endStage(G, ctx);
   }
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 const gatling = (G: IGameState, ctx: Ctx) => {
@@ -918,6 +942,10 @@ const panic = (
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 
   endStage(G, ctx);
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 const saloon = (G: IGameState, ctx: Ctx) => {
@@ -1357,6 +1385,10 @@ export const patBrennanEquipmentDraw = (
   currentPlayer.hand.push(cardToTake);
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
   currentPlayer.cardDrawnAtStartLeft = 0;
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
@@ -1705,28 +1737,16 @@ export const evelynShebangPower = (G: IGameState, ctx: Ctx, numberOfTargets: num
 
 export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
-  const bangCard = G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
-    G.players[targetPlayerId].cardsInPlay[0] || { id: 1, name: 'no card' };
 
-  if (bangCard) {
-    let activePlayersValue = {
-      ...(ctx.activePlayers || {}),
-    };
+  let activePlayersValue = {
+    ...(ctx.activePlayers || {}),
+  };
 
-    if (bangCard.name === 'bang') {
-      activePlayersValue[targetPlayerId] = stageNames.reactToBang;
-    } else {
-      activePlayersValue[targetPlayerId] = stageNames.reactToBangWithoutBang;
-    }
+  activePlayersValue[targetPlayerId] = stageNames.reactToBang;
 
-    if (ctx.events?.setActivePlayers) {
-      ctx.events?.setActivePlayers({
-        value: activePlayersValue,
-      });
-    }
-  }
+  setActivePlayersStage(G, ctx, activePlayersValue);
 
-  ctx.effects.gunshot(bangCard.id);
+  ctx.effects.gunshot('1');
 
   G.reactionRequired = {
     quantity: 1,
@@ -1744,10 +1764,7 @@ export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
   const playerStages = ctx.activePlayers ?? {};
   let countPlayersReactingToBang = 0;
   for (const key in playerStages) {
-    if (
-      playerStages[key] === stageNames.reactToBang ||
-      playerStages[key] === stageNames.reactToBangWithoutBang
-    ) {
+    if (playerStages[key] === stageNames.reactToBang) {
       countPlayersReactingToBang++;
     }
   }
@@ -1757,7 +1774,8 @@ export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
       currentPlayer.character.name === 'evelyn shebang' &&
       currentPlayer.cardDrawnAtStartLeft === 0 &&
       countPlayersReactingToBang < 1
-    )
+    ) &&
+    !G.henryBlockAfterEffects
   ) {
     endStage(G, ctx);
   }
@@ -1783,7 +1801,40 @@ const lemonadeJimPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   makePlayerDiscardToPlay(G, ctx, 'heal' as CardName, targetPlayerId, 2, [1]);
 };
 
-export const moves_VOS: MoveMap<IGameState> = {
+export const continueAfterHenryBlockBang = (G: IGameState, ctx: Ctx) => {
+  setActivePlayersStage(
+    G,
+    ctx,
+    {
+      [ctx.currentPlayer]: stageNames.continueAfterHenryBlockBang,
+    },
+    1
+  );
+};
+
+export const henryBlockBang = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  henryBlockId: string,
+  move: string,
+  moveArgs: any[],
+  cardIndex: number,
+  type: RobbingType
+) => {
+  G.henryBlockAfterEffects = {
+    robberId: targetPlayerId,
+    victimId: henryBlockId,
+    move,
+    moveArgs,
+    cardIndex,
+    type,
+  };
+
+  bangWithPower(G, ctx, targetPlayerId);
+};
+
+export const moves_VOS = {
   lastcall,
   snakeResult,
   bandidos,
@@ -1805,9 +1856,11 @@ export const moves_VOS: MoveMap<IGameState> = {
   tucoFranziskanerDraw,
   askLemonadeJim,
   lemonadeJimPower,
+  henryBlockBang,
+  continueAfterHenryBlockBang,
 };
 
-export const moves_DodgeCity: MoveMap<IGameState> = {
+export const moves_DodgeCity = {
   equipGreenCard,
   ragtime,
   springfield,
@@ -1831,7 +1884,7 @@ export const moves_DodgeCity: MoveMap<IGameState> = {
   pickCardsForBrawl,
 };
 
-export const moves: MoveMap<IGameState> = {
+export const moves = {
   takeDamage,
   drawFromDeck,
   barrelResult,
@@ -1877,6 +1930,8 @@ export const moves: MoveMap<IGameState> = {
   setActivePlayersStage,
   tucoFranziskanerDraw,
   heal,
+  resetGameStage,
+  resetHenryBlockEffects,
 };
 
 const allMoves = {

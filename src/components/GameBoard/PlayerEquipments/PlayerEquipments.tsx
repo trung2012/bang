@@ -49,6 +49,18 @@ export const PlayerEquipments: React.FC<IPlayerEquipments> = ({ playerId, equipm
         return;
       }
 
+      if (targetPlayer.character.name === 'henry block') {
+        moves.henryBlockBang(
+          sourcePlayer.id,
+          playerId,
+          'patBrennanEquipmentDraw',
+          [playerId, index, cardLocation],
+          index,
+          cardLocation
+        );
+        return;
+      }
+
       moves.patBrennanEquipmentDraw(playerId, index, cardLocation);
       return;
     }
