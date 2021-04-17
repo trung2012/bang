@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import classnames from 'classnames';
 import { useCardsContext, useErrorContext, useGameContext } from '../../../context';
 import {
+  animationDelayMilliseconds,
   cardsThatCanTargetsSelf,
   cardsWhichTargetCards,
   hasActiveDynamite,
@@ -203,7 +204,24 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
           return;
         }
         moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
-        moves.bang(player.id);
+
+        if (sourcePlayer.character.name === 'colorado bill') {
+          const topCard = G.deck[G.deck.length - 1];
+
+          moves.drawToReact(playerID);
+
+          setTimeout(() => {
+            if (topCard.suit === 'spades') {
+              moves.takeDamage(player.id);
+              return;
+            } else {
+              moves.bang(player.id);
+            }
+          }, animationDelayMilliseconds);
+        } else {
+          moves.bang(player.id);
+        }
+
         return;
       }
       case 'duel': {

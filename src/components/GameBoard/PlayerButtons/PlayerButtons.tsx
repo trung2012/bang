@@ -49,9 +49,20 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           setNotification('Please click on a player to bang');
           break;
         }
+        case stageNames.askLemonadeJim: {
+          setModalContent({
+            title: `Lemonade Jim power`,
+            text: `Do you want to discard 1 card to regain 1 health?`,
+            buttons: [
+              { text: 'Yes', moveName: 'lemonadeJimPower', moveArgs: [playerID] },
+              { text: 'No', moveName: 'endStage' },
+            ],
+          });
+          break;
+        }
       }
     }
-  }, [playerCurrentStage, setNotification]);
+  }, [playerCurrentStage, playerID, setModalContent, setNotification]);
 
   const onEndTurnClick = () => {
     if (!isClientPlayer || !isActive) {

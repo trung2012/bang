@@ -6,7 +6,7 @@ import {
   stageNames,
   stageNameToRequiredCardsMap,
 } from './constants';
-import { CardName, ICard, ICardToDiscard, IGameState, RobbingType } from './types';
+import { CardName, CharacterName, ICard, ICardToDiscard, IGameState, RobbingType } from './types';
 import {
   isCharacterInGame,
   getOtherPlayersAliveStages,
@@ -47,6 +47,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   }
 
   const currentPlayer = G.players[ctx.currentPlayer];
+  clearCardsInPlay(G, ctx, currentPlayer.id);
   const doesCurrentPlayerHasShotgun = hasShotgun(currentPlayer);
   const cardCausingDamage = targetPlayer.cardsInPlay[0];
   const targetPlayerStage = (ctx.activePlayers
@@ -312,6 +313,10 @@ export const clearCardsInPlay = (G: IGameState, ctx: Ctx, targetPlayerId: string
       G.discarded.push(discardedCard);
     }
   }
+
+  if (ctx.activePlayers && ctx.activePlayers[targetPlayerId] === stageNames.play) {
+    endStage(G, ctx);
+  }
 };
 
 export const jailResult = (G: IGameState, ctx: Ctx) => {
@@ -469,18 +474,19 @@ export const playCardToReact = (
     }
   }
 
-  if (ctx.events?.endStage) {
-    ctx.events.endStage();
+  endStage(G, ctx);
 
-    // If you can play card to react, you passed the stage and can now be attacked again
-    reactingPlayer.barrelUseLeft = 1;
-    if (reactingPlayer.character.name === 'jourdonnais') {
-      reactingPlayer.jourdonnaisPowerUseLeft = 1;
-    }
+  // If you can play card to react, you passed the stage and can now be attacked again
+  reactingPlayer.barrelUseLeft = 1;
+  if (reactingPlayer.character.name === 'jourdonnais') {
+    reactingPlayer.jourdonnaisPowerUseLeft = 1;
   }
 
   if (onlyHandCardToPlay !== null && previousActiveStage === stageNames.duel) {
-    if (previousSourcePlayerId) {
+    if (
+      previousSourcePlayerId &&
+      !(reactingPlayer.character.name === 'mick defender' && onlyHandCardToPlay.name === 'missed')
+    ) {
       duel(G, ctx, previousSourcePlayerId, reactingPlayerId);
     }
   }
@@ -805,12 +811,30 @@ const bang = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     checkIfCanDrawOneAfterReacting(G, currentPlayer, bangCard);
   }
 
+  clearCardsInPlay(G, ctx, currentPlayer.id);
   endStage(G, ctx);
+};
+
+const heal = (G: IGameState, ctx: Ctx, targetPlayerId: string, amount: number) => {
+  const targetPlayer = G.players[targetPlayerId];
+  targetPlayer.hp = Math.min(targetPlayer.maxHp, targetPlayer.hp + amount);
+  endStage(G, ctx);
+  resetDiscardStage(G, ctx);
 };
 
 const beer = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   const beerCard = currentPlayer.cardsInPlay[0];
+
+  const lemonadeJimIds = isCharacterInGame(G, 'lemonade jim');
+
+  if (lemonadeJimIds?.length) {
+    for (const id of lemonadeJimIds) {
+      if (id !== ctx.currentPlayer) {
+        askLemonadeJim(G, ctx, id);
+      }
+    }
+  }
 
   if (ctx.phase !== 'suddenDeath' && beerCard.name === 'beer') {
     if (beerCard) {
@@ -1135,10 +1159,17 @@ export const copyCharacter = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
   }
 };
 
-export const reselectCharacter = (G: IGameState, ctx: Ctx) => {
+export const reselectCharacter = (G: IGameState, ctx: Ctx, characterName?: CharacterName) => {
   let currentPlayer = G.players[ctx.currentPlayer];
   const randomIndex = Math.floor(Math.random() * G.characters.length);
-  const newCharacter = G.characters.splice(randomIndex, 1)[0];
+  let newCharacter = G.characters.splice(randomIndex, 1)[0];
+
+  if (characterName) {
+    const foundCharacter = G.characters.find(c => c.name === characterName);
+    if (foundCharacter) {
+      newCharacter = foundCharacter;
+    }
+  }
 
   if (newCharacter) {
     const newPlayer = {
@@ -1732,6 +1763,26 @@ export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
   }
 };
 
+export const tucoFranziskanerDraw = (G: IGameState, ctx: Ctx) => {
+  const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
+  drawFromDeck(G, ctx, 2);
+
+  if (currentPlayer.equipments.length === 0) {
+    drawFromDeck(G, ctx, 2);
+  }
+};
+
+const askLemonadeJim = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  setActivePlayersStage(G, ctx, {
+    [ctx.currentPlayer]: stageNames.play,
+    [targetPlayerId]: stageNames.askLemonadeJim,
+  });
+};
+
+const lemonadeJimPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  makePlayerDiscardToPlay(G, ctx, 'heal' as CardName, targetPlayerId, 2, [1]);
+};
+
 export const moves_VOS: MoveMap<IGameState> = {
   lastcall,
   snakeResult,
@@ -1751,6 +1802,9 @@ export const moves_VOS: MoveMap<IGameState> = {
   derSpotBurstRingerPower,
   evelynShebangPower,
   bangWithPower,
+  tucoFranziskanerDraw,
+  askLemonadeJim,
+  lemonadeJimPower,
 };
 
 export const moves_DodgeCity: MoveMap<IGameState> = {
@@ -1821,6 +1875,8 @@ export const moves: MoveMap<IGameState> = {
   discardToReact,
   equipOtherPlayer,
   setActivePlayersStage,
+  tucoFranziskanerDraw,
+  heal,
 };
 
 const allMoves = {

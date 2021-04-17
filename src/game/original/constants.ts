@@ -203,6 +203,7 @@ export enum stageNames {
   reactToRobbery = 'reactToRobbery',
   pickCardsForBrawl = 'pickCardsForBrawl',
   clickToBang = 'clickToBang',
+  askLemonadeJim = 'askLemonadeJim',
 }
 
 export const stagesReactingToBullets = [
@@ -259,6 +260,7 @@ export const stageNameToRequiredCardsMap: {
   reactToBang: cardsThatWorkAgainstBang,
   duel: ['bang', 'escape'],
   reactToBangWithoutBang: [...cardsThatWorkAgainstBang, 'escape'],
+  reactToRobbery: ['escape'],
 };
 
 export const teamLookUp = {

@@ -70,6 +70,10 @@ export const Deck = () => {
         moves.billNoFaceDraw();
         return;
       }
+      case 'tuco franziskaner': {
+        moves.tucoFranziskanerDraw();
+        return;
+      }
       default:
         moves.drawFromDeck(2);
         return;

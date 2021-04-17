@@ -202,14 +202,19 @@ export const canPlayCardToReact = (
   },
   reactingPlayer: IGamePlayer,
   cardClicked: ICard,
-  cardsNeeded: CardName[]
+  cardsNeeded: CardName[],
+  stageName?: stageNames
 ) => {
   return (
     cardsNeeded.includes(cardClicked.name) ||
     (reactingPlayer.character.name === 'calamity janet' &&
       ['bang', 'missed'].includes(cardClicked.name) &&
       cardsNeeded.some((cardName: CardName) => ['bang', 'missed'].includes(cardName))) ||
-    (cardsNeeded.includes('missed') && reactingPlayer.character.name === 'elena fuente')
+    (cardsNeeded.includes('missed') && reactingPlayer.character.name === 'elena fuente') ||
+    (stageName &&
+      stageName !== stageNames.reactToBang &&
+      reactingPlayer.character.name === 'mick defender' &&
+      cardClicked.name === 'missed')
   );
 };
 

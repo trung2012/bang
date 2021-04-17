@@ -11,6 +11,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       endStage: moves.endStage,
       bang: moves.bang,
+      heal: moves.heal,
     },
   },
   [stageNames.clickToBang]: {
@@ -163,6 +164,12 @@ const stages: StageMap<IGameState> = {
   [stageNames.pickCardsForBrawl]: {
     moves: {
       pickCardsForBrawl: moves.pickCardsForBrawl,
+    },
+  },
+  [stageNames.askLemonadeJim]: {
+    moves: {
+      lemonadeJimPower: moves.lemonadeJimPower,
+      endStage: moves.endStage,
     },
   },
 };

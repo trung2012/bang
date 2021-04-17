@@ -50,7 +50,7 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     (cardLocation === 'hand' && selectedCards.hand.includes(index)) ||
     (cardLocation === 'green' && selectedCards.green.includes(index));
   const selectedCardsTotalLength = selectedCards.hand.length + selectedCards.green.length;
-  const stageName = ctx.activePlayers ? (ctx.activePlayers[playerID!] as stageNames) : null;
+  const stageName = ctx.activePlayers ? (ctx.activePlayers[playerID!] as stageNames) : undefined;
   const cardsNeeded =
     stageName && stageNameToRequiredCardsMap[stageName]
       ? stageNameToRequiredCardsMap[stageName]
@@ -76,7 +76,10 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
   };
 
   const onCardClickToReact = () => {
-    if (!isActive || playerID === null) return;
+    if (!isActive || playerID === null) {
+      setError(`Something went wrong`);
+      return;
+    }
 
     // Process moves when source player is different from target player
     if (stageName === stageNames.ragtime) {
@@ -85,7 +88,10 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
     }
 
     // Process moves when source player is target player (current turn)
-    if (!isTargetPlayerTurn) return;
+    if (!isTargetPlayerTurn) {
+      setError(`It's not your turn`);
+      return;
+    }
 
     if (card.name === 'escape' && stageName !== stageNames.reactToBang) {
       moves.discardToReact(playerId, index);
@@ -96,7 +102,7 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
       if (
         !isSelected &&
         selectedCardsTotalLength === reactionRequired.quantity - 1 &&
-        canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded)
+        canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded, stageName)
       ) {
         if (cardLocation === 'hand') {
           moves.playCardToReact(
@@ -141,7 +147,7 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
             }));
           }
         } else {
-          if (canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded)) {
+          if (canPlayCardToReact(reactionRequired, targetPlayer, card, cardsNeeded, stageName)) {
             if (cardLocation === 'hand') {
               setSelectedCards({
                 hand: [...selectedCards.hand, index],

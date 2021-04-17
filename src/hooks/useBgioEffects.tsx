@@ -150,11 +150,12 @@ export const useBgioEffects = () => {
         y: 40,
         delay: animationDelaySeconds,
         duration: 0.2,
-        onComplete: () =>
+        onComplete: () => {
           gsap.to(`#${CSS.escape(cardId)}`, {
             y: 0,
             duration: 0.1,
-          }),
+          });
+        },
       });
     },
     [playGunCock]
