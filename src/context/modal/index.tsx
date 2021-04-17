@@ -7,15 +7,16 @@ export interface IModalContext {
 
 export const ModalContext = React.createContext<IModalContext | null>(null);
 
-interface IModalContent {
+export interface IModalContent {
   title: string;
   text: string;
-  yesButtonText: string;
-  yesButtonMoveName?: string;
-  yesButtonArgs?: any[];
-  noButtonText: string;
-  noButtonMoveName?: string;
-  noButtonArgs?: any[];
+  buttons?: IModalButton[];
+}
+
+export interface IModalButton {
+  text: string;
+  moveName?: string;
+  moveArgs?: any[];
 }
 
 export const ModalProvider: React.FC = ({ children }) => {

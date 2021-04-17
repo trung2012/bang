@@ -12,8 +12,6 @@ export interface IGameState {
   reactionRequired: {
     sourcePlayerId: string | null;
     quantity: number;
-    moveToPlayAfterDiscard?: CardName | null;
-    moveArgs?: any[];
   };
   robberyState: {
     robberId: string;
@@ -31,6 +29,16 @@ export interface IGameState {
   brawlPlayersToDiscard: {
     [playerId: string]: boolean;
   };
+  discardState: {
+    moveToPlayAfterDiscard?: CardName | null;
+    moveArgs?: any[];
+    cardToDiscard?: ICardToDiscard;
+  };
+}
+
+export interface ICardToDiscard {
+  name?: CardName;
+  suit?: CardSuit;
 }
 
 export interface IGamePlayerMap {

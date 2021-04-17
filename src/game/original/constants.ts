@@ -1,5 +1,5 @@
 import { ExpansionName } from './config';
-import { CardName, ICharacter, ILookup } from './types';
+import { CardName, CharacterName, ICharacter, ILookup } from './types';
 
 export const cardVal = {
   2: 'two',
@@ -202,6 +202,7 @@ export enum stageNames {
   saved = 'saved',
   reactToRobbery = 'reactToRobbery',
   pickCardsForBrawl = 'pickCardsForBrawl',
+  clickToBang = 'clickToBang',
 }
 
 export const stagesReactingToBullets = [
@@ -281,3 +282,9 @@ export const roleImageSrcLookup = {
 export const bangExpansions: ExpansionName[] = ['valley of shadows', 'dodge city'];
 
 export const bangNumPlayers = [2, 3, 4, 5, 6, 7, 8];
+
+export const charactersWithBangPower: CharacterName[] = [
+  'doc holyday',
+  'black flower',
+  'evelyn shebang',
+];

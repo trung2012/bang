@@ -9,6 +9,7 @@ import { ReactComponent as CancelIcon } from '../../../assets/cancel.svg';
 import './PlayerButtons.scss';
 import {
   delayBetweenActions,
+  getOtherPlayersAlive,
   hasActiveDynamite,
   hasActiveSnake,
   IGamePlayer,
@@ -18,12 +19,14 @@ import {
   stagesReactingToBullets,
 } from '../../../game';
 import useSound from 'use-sound';
+import { IModalButton, useModalContext } from '../../../context/modal';
 const power = require('../../../assets/sounds/power.mp3');
 
 export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => {
   const [playPower] = useSound(power, { volume: 0.2 });
   const { G, ctx, moves, playerID, isActive } = useGameContext();
   const { setError, setNotification } = useErrorContext();
+  const { setModalContent } = useModalContext();
   const isClientPlayer = playerID === player.id;
   const isCurrentPlayer = isClientPlayer && player.id === ctx.currentPlayer;
   const playerCurrentStage = (ctx.activePlayers
@@ -39,7 +42,11 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
     if (playerCurrentStage) {
       switch (playerCurrentStage) {
         case stageNames.discardToPlayCard: {
-          setNotification('Please click a card to discard and continue');
+          setNotification('Please click on a card to discard and continue');
+          break;
+        }
+        case stageNames.clickToBang: {
+          setNotification('Please click on a player to bang');
           break;
         }
       }
@@ -87,6 +94,14 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
   const onPowerClick = () => {
     if (!isClientPlayer) return;
 
+    if (
+      player.character.name !== 'jourdonnais' &&
+      player.character.name !== 'chuck wengam' &&
+      (player.character.activePowerUsesLeft ?? 0) <= 0
+    ) {
+      return;
+    }
+
     switch (player.character.name) {
       case 'jourdonnais': {
         if (player.jourdonnaisPowerUseLeft > 0) {
@@ -120,6 +135,58 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           return;
         }
         moves.joseDelgadoPower();
+        playPower();
+        return;
+      }
+      case 'black flower': {
+        if (!player.hand.some(card => card.suit === 'clubs')) {
+          setError('You have no Clubs card to discard');
+          return;
+        }
+        moves.blackFlowerPower();
+        playPower();
+        return;
+      }
+      case 'doc holyday': {
+        if (player.hand.length < 2) {
+          setError('You do not have enough cards to discard');
+          return;
+        }
+        moves.docHolyDayPower();
+        playPower();
+        return;
+      }
+      case 'der spot - burst ringer': {
+        if (!player.hand.some(card => card.name === 'bang')) {
+          setError('You have no Bang cards to use this power');
+          return;
+        }
+        moves.derSpotBurstRingerPower();
+        playPower();
+        return;
+      }
+      case 'evelyn shebang': {
+        if (player.cardDrawnAtStartLeft <= 0) {
+          setError('You cannot use your power now');
+          return;
+        }
+        const otherPlayersAlive = getOtherPlayersAlive(G, ctx);
+        const buttons: IModalButton[] = [{ text: '0' }];
+
+        if (otherPlayersAlive.length >= 1) {
+          buttons.push({ text: '1', moveName: 'evelynShebangPower', moveArgs: [1] });
+        }
+
+        if (otherPlayersAlive.length >= 2) {
+          buttons.push({ text: '2', moveName: 'evelynShebangPower', moveArgs: [2] });
+        }
+
+        setModalContent({
+          title: 'Evelyn Shebang Power',
+          text: 'How many people do you want to bang this turn?',
+          buttons,
+        });
+
         playPower();
         return;
       }

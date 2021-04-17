@@ -10,6 +10,13 @@ const stages: StageMap<IGameState> = {
       resetGameStage: moves.resetGameStage,
       clearCardsInPlay: moves.clearCardsInPlay,
       endStage: moves.endStage,
+      bang: moves.bang,
+    },
+  },
+  [stageNames.clickToBang]: {
+    moves: {
+      bangWithPower: moves.bangWithPower,
+      endStage: moves.endStage,
     },
   },
   joseDelgadoDiscard: {

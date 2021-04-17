@@ -51,36 +51,64 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
         return;
       }
 
-      if (clientPlayerStage === stageNames.fanning) {
-        const firstTargetId = ctx.playOrder.find(
-          id => !!ctx.activePlayers && ctx.activePlayers[id] === stageNames.reactToBang
-        );
+      switch (clientPlayerStage) {
+        case stageNames.fanning: {
+          const firstTargetId = ctx.playOrder.find(
+            id => !!ctx.activePlayers && ctx.activePlayers[id] === stageNames.reactToBang
+          );
 
-        if (firstTargetId === undefined) {
-          moves.endStage();
+          if (firstTargetId === undefined) {
+            moves.endStage();
+            return;
+          }
+
+          const distanceFromFirstTarget = calculateDistanceFromTarget(
+            players,
+            ctx.playOrder,
+            firstTargetId,
+            player.id
+          );
+
+          if (player.hp <= 0) return;
+
+          if (player.id === playerID) {
+            setError(`Cannot bang yourself`);
+            return;
+          }
+
+          if (distanceFromFirstTarget > 1) {
+            setError('Target is not within 1 distance. Please choose a different target');
+            return;
+          }
+
+          moves.bang(player.id);
           return;
         }
+        case stageNames.clickToBang: {
+          if (ctx.activePlayers && ctx.activePlayers[player.id]) {
+            setError('This player is already being banged. Choose a different target');
+            return;
+          }
 
-        const distanceFromFirstTarget = calculateDistanceFromTarget(
-          players,
-          ctx.playOrder,
-          firstTargetId,
-          player.id
-        );
+          if (clientPlayer.character.name === 'doc holyday') {
+            moves.bangWithPower(player.id);
+          } else {
+            const distance = calculateDistanceFromTarget(
+              players,
+              ctx.playOrder,
+              clientPlayer.id,
+              player.id
+            );
 
-        if (player.hp <= 0) return;
+            if (distance > 1) {
+              setError('Target is not within reach. Choose a different target');
+              return;
+            }
 
-        if (player.id === playerID) {
-          setError(`Cannot bang yourself`);
+            moves.bangWithPower(player.id);
+          }
           return;
         }
-
-        if (distanceFromFirstTarget > 1) {
-          setError('Target is not within 1 distance. Please choose a different target');
-          return;
-        }
-
-        moves.bang(player.id);
       }
     }
   };

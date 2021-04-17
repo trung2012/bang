@@ -48,11 +48,7 @@ export const Deck = () => {
       return;
     }
 
-    if (
-      (clientPlayer.character.name === 'jesse jones' ||
-        clientPlayer.character.name === 'pedro ramirez') &&
-      clientPlayer.cardDrawnAtStartLeft === 1
-    ) {
+    if (clientPlayer.cardDrawnAtStartLeft === 1) {
       moves.drawOneFromDeck();
       return;
     }

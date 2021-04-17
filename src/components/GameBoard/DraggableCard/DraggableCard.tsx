@@ -183,6 +183,16 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
         return;
       }
 
+      if (stageName === stageNames.discardToPlayCard && G.discardState.cardToDiscard) {
+        if (
+          (G.discardState.cardToDiscard.name && G.discardState.cardToDiscard.name !== card.name) ||
+          (G.discardState.cardToDiscard.suit && G.discardState.cardToDiscard.suit !== card.suit)
+        ) {
+          setError(`That's not a valid card. Choose another one`);
+          return;
+        }
+      }
+
       switch (stageName) {
         case stageNames.tornado: {
           moves.discardForTornado(playerID, index);
@@ -198,18 +208,14 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
         }
       }
 
-      if (G.reactionRequired.moveToPlayAfterDiscard) {
-        const moveName = G.reactionRequired.moveToPlayAfterDiscard.replace(' ', '').toLowerCase();
+      if (G.discardState.moveToPlayAfterDiscard) {
+        const moveName = G.discardState.moveToPlayAfterDiscard.replace(' ', '').toLowerCase();
 
         if (!moves[moveName]) {
           throw Error('No move no target');
         }
 
-        if (G.reactionRequired.moveArgs) {
-          moves[moveName](...G.reactionRequired.moveArgs);
-        } else {
-          moves[moveName]();
-        }
+        moves[moveName](...(G.discardState.moveArgs || []));
 
         return;
       }

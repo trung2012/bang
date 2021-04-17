@@ -6,6 +6,7 @@ import {
   cards_DodgeCity,
   cards_VOS,
   characters_DodgeCity,
+  characters_VOS,
 } from '../expansions';
 import { ExpansionName } from './config';
 import { gunRange, stageNames } from './constants';
@@ -166,7 +167,7 @@ export const addExpansionCharacters = (characters: ICharacter[], expansions: Exp
   const newCharacters = [...characters, ...characters_DodgeCity];
 
   if (expansions.includes('valley of shadows')) {
-    // newCharacters.push(...characters_VOS);
+    newCharacters.push(...characters_VOS);
   }
 
   return newCharacters;

@@ -47,8 +47,8 @@ const setup = (ctx: Ctx, setupData: ISetupData) => {
     sourcePlayerId: null,
     cardNeeded: [] as CardName[],
     quantity: 1,
-    moveToPlayAfterDiscard: null,
   };
+  const discardState = {};
   const brawlPlayersToDiscard = {};
   const robberyState = null;
 
@@ -97,6 +97,7 @@ const setup = (ctx: Ctx, setupData: ISetupData) => {
     characters: charactersShuffled,
     brawlPlayersToDiscard,
     robberyState,
+    discardState,
   } as IGameState;
 };
 

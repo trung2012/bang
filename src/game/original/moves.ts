@@ -1,7 +1,12 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
 import { ActivePlayersArg, Ctx, MoveMap } from 'boardgame.io';
-import { gunRange, stageNames, stageNameToRequiredCardsMap } from './constants';
-import { CardName, ICard, IGameState, RobbingType } from './types';
+import {
+  charactersWithBangPower,
+  gunRange,
+  stageNames,
+  stageNameToRequiredCardsMap,
+} from './constants';
+import { CardName, ICard, ICardToDiscard, IGameState, RobbingType } from './types';
 import {
   isCharacterInGame,
   getOtherPlayersAliveStages,
@@ -761,10 +766,9 @@ export const barrelResult = (
 };
 
 const bang = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
-  const currentPlayer = G.players[ctx.currentPlayer];
-  const bangCard =
-    G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
-    G.players[targetPlayerId].cardsInPlay[0];
+  const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
+  const bangCard = G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
+    G.players[targetPlayerId].cardsInPlay[0] || { name: 'no card' };
 
   if (bangCard) {
     let activePlayersValue = {
@@ -860,19 +864,17 @@ const catbalou = (
 
 const gatling = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  const gatlingCard = currentPlayer.cardsInPlay[0];
-  if (gatlingCard) {
-    ctx.effects.gatling(gatlingCard.id);
-  }
+  const gatlingCard = currentPlayer.cardsInPlay[0] || { id: 0 };
+  ctx.effects.gatling(gatlingCard.id);
 
   const activePlayers = getOtherPlayersAliveStages(G, ctx, stageNames.reactToGatling);
 
   if (ctx.events?.setActivePlayers) {
     ctx.events?.setActivePlayers({
-      currentPlayer: {
-        stage: stageNames.play,
-        moveLimit: 1,
-      },
+      // currentPlayer: {
+      //   stage: stageNames.play,
+      //   moveLimit: 1,
+      // },
       value: activePlayers,
     });
   }
@@ -1088,8 +1090,18 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
     ctx.events.endTurn();
   }
 
-  if (currentPlayer.character.name === 'jose delgado') {
-    currentPlayer.character.activePowerUsesLeft = 2;
+  switch (currentPlayer.character.name) {
+    case 'jose delgado': {
+      currentPlayer.character.activePowerUsesLeft = 2;
+      break;
+    }
+    case 'black flower':
+    case 'der spot - burst ringer':
+    case 'evelyn shebang':
+    case 'doc holyday': {
+      currentPlayer.character.activePowerUsesLeft = 1;
+      break;
+    }
   }
 
   resetDiscardStage(G, ctx);
@@ -1173,16 +1185,19 @@ export const equipGreenCard = (G: IGameState, ctx: Ctx, cardIndex: number) => {
 };
 
 export const resetDiscardStage = (G: IGameState, ctx: Ctx) => {
-  G.reactionRequired.moveToPlayAfterDiscard = null;
-  G.reactionRequired.moveArgs = undefined;
+  G.discardState.moveToPlayAfterDiscard = null;
+  G.discardState.moveArgs = undefined;
+  G.discardState.cardToDiscard = undefined;
 };
 
 export const makePlayerDiscardToPlay = (
   G: IGameState,
   ctx: Ctx,
-  cardName: CardName,
+  moveName: CardName,
   targetPlayerId?: string,
-  numCards?: number
+  numCards?: number,
+  moveArgs?: any[],
+  cardToDiscard?: ICardToDiscard
 ) => {
   if (ctx.events?.setActivePlayers) {
     ctx.events.setActivePlayers({
@@ -1193,8 +1208,11 @@ export const makePlayerDiscardToPlay = (
     });
   }
 
-  G.reactionRequired.moveToPlayAfterDiscard = cardName;
-  G.reactionRequired.moveArgs = [targetPlayerId ?? ctx.currentPlayer];
+  G.discardState.moveToPlayAfterDiscard = moveName;
+  G.discardState.moveArgs = [targetPlayerId ?? ctx.currentPlayer, ...(moveArgs ?? [])];
+  if (cardToDiscard) {
+    G.discardState.cardToDiscard = cardToDiscard;
+  }
 };
 
 export const ragtime = (G: IGameState, ctx: Ctx) => {
@@ -1317,15 +1335,6 @@ export const chuckWengamPower = (G: IGameState, ctx: Ctx) => {
   drawTwoFromDeck(G, ctx);
 };
 
-export const docHolyDayPower = (G: IGameState, ctx: Ctx) => {
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      currentPlayer: stageNames.discardToPlayCard,
-      moveLimit: 1,
-    });
-  }
-};
-
 export const patBrennanEquipmentDraw = (
   G: IGameState,
   ctx: Ctx,
@@ -1353,7 +1362,7 @@ export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
     });
   }
 
-  G.reactionRequired.moveToPlayAfterDiscard = 'josedelgadodraw' as CardName;
+  G.discardState.moveToPlayAfterDiscard = 'josedelgadodraw' as CardName;
 
   if (currentPlayer.character.activePowerUsesLeft !== undefined) {
     currentPlayer.character.activePowerUsesLeft -= 1;
@@ -1647,6 +1656,106 @@ export const giveCardToRobber = (
   clearCardsInPlay(G, ctx, robber.id);
 };
 
+export const makeplayerclicktobang = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  numberOfTargets: number
+) => {
+  if (ctx.events?.setActivePlayers) {
+    ctx.events.setActivePlayers({
+      value: {
+        [targetPlayerId ?? ctx.currentPlayer]: stageNames.clickToBang,
+      },
+      moveLimit: numberOfTargets ?? 1,
+    });
+  }
+};
+
+export const docHolyDayPower = (G: IGameState, ctx: Ctx) => {
+  makePlayerDiscardToPlay(G, ctx, 'makePlayerClickToBang' as CardName, ctx.currentPlayer, 2, []);
+};
+
+export const blackFlowerPower = (G: IGameState, ctx: Ctx) => {
+  makePlayerDiscardToPlay(G, ctx, 'makePlayerClickToBang' as CardName, ctx.currentPlayer, 1, [], {
+    suit: 'clubs',
+  });
+};
+
+export const derSpotBurstRingerPower = (G: IGameState, ctx: Ctx) => {
+  makePlayerDiscardToPlay(G, ctx, 'gatling' as CardName, ctx.currentPlayer, 1, [], {
+    name: 'bang',
+  });
+};
+
+export const evelynShebangPower = (G: IGameState, ctx: Ctx, numberOfTargets: number) => {
+  const currentPlayer = G.players[ctx.currentPlayer];
+
+  makeplayerclicktobang(G, ctx, ctx.currentPlayer, numberOfTargets);
+
+  currentPlayer.cardDrawnAtStartLeft -= numberOfTargets;
+};
+
+export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
+  const bangCard = G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
+    G.players[targetPlayerId].cardsInPlay[0] || { id: 1, name: 'no card' };
+
+  if (bangCard) {
+    let activePlayersValue = {
+      ...(ctx.activePlayers || {}),
+    };
+
+    if (bangCard.name === 'bang') {
+      activePlayersValue[targetPlayerId] = stageNames.reactToBang;
+    } else {
+      activePlayersValue[targetPlayerId] = stageNames.reactToBangWithoutBang;
+    }
+
+    if (ctx.events?.setActivePlayers) {
+      ctx.events?.setActivePlayers({
+        value: activePlayersValue,
+      });
+    }
+  }
+
+  ctx.effects.gunshot(bangCard.id);
+
+  G.reactionRequired = {
+    quantity: 1,
+    sourcePlayerId: currentPlayer.id,
+  };
+
+  if (charactersWithBangPower.includes(currentPlayer.character.name)) {
+    if (!currentPlayer.character.activePowerUsesLeft) {
+      currentPlayer.character.activePowerUsesLeft = 0;
+    } else {
+      currentPlayer.character.activePowerUsesLeft -= 1;
+    }
+  }
+
+  const playerStages = ctx.activePlayers ?? {};
+  let countPlayersReactingToBang = 0;
+  for (const key in playerStages) {
+    if (
+      playerStages[key] === stageNames.reactToBang ||
+      playerStages[key] === stageNames.reactToBangWithoutBang
+    ) {
+      countPlayersReactingToBang++;
+    }
+  }
+
+  if (
+    !(
+      currentPlayer.character.name === 'evelyn shebang' &&
+      currentPlayer.cardDrawnAtStartLeft === 0 &&
+      countPlayersReactingToBang < 1
+    )
+  ) {
+    endStage(G, ctx);
+  }
+};
+
 export const moves_VOS: MoveMap<IGameState> = {
   lastcall,
   snakeResult,
@@ -1661,6 +1770,11 @@ export const moves_VOS: MoveMap<IGameState> = {
   putPlayersInSavedState,
   putInBeingRobbedStage,
   giveCardToRobber,
+  makeplayerclicktobang,
+  blackFlowerPower,
+  derSpotBurstRingerPower,
+  evelynShebangPower,
+  bangWithPower,
 };
 
 export const moves_DodgeCity: MoveMap<IGameState> = {

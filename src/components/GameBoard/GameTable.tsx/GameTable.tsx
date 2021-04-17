@@ -71,10 +71,10 @@ export const GameTable = () => {
       setModalContent({
         title: 'Choose another character',
         text: 'Do you want to play with another character?',
-        yesButtonText: 'Yes',
-        yesButtonMoveName: 'reselectCharacter',
-        noButtonText: 'No',
-        noButtonMoveName: 'endTurn',
+        buttons: [
+          { text: 'Yes', moveName: 'reselectCharacter' },
+          { text: 'No', moveName: 'endTurn' },
+        ],
       });
     }
   }, [ctx.phase, isActive, setModalContent]);
@@ -112,38 +112,30 @@ export const GameTable = () => {
         {modalContent && (
           <Modal title={modalContent.title}>
             <span>{modalContent.text}</span>
-            <div className='modal-buttons'>
-              <CustomButton
-                text={modalContent.yesButtonText}
-                onClick={() => {
-                  if (modalContent.yesButtonMoveName && moves[modalContent.yesButtonMoveName]) {
-                    if (modalContent.yesButtonArgs) {
-                      moves[modalContent.yesButtonMoveName](...modalContent.yesButtonArgs);
-                      return;
-                    }
+            {modalContent.buttons && (
+              <div className='modal-buttons'>
+                {modalContent.buttons.map(button => {
+                  const { text, moveName, moveArgs } = button;
+                  return (
+                    <CustomButton
+                      key={button.text}
+                      text={text}
+                      onClick={() => {
+                        setModalContent(null);
+                        if (moveName && moves[moveName]) {
+                          if (moveArgs) {
+                            moves[moveName](...moveArgs);
+                            return;
+                          }
 
-                    moves[modalContent.yesButtonMoveName]();
-                  }
-
-                  setModalContent(null);
-                }}
-              />
-              <CustomButton
-                text={modalContent.noButtonText}
-                onClick={() => {
-                  if (modalContent.noButtonMoveName && moves[modalContent.noButtonMoveName]) {
-                    if (modalContent.noButtonArgs) {
-                      moves[modalContent.noButtonMoveName](...modalContent.noButtonArgs);
-                      return;
-                    }
-
-                    moves[modalContent.noButtonMoveName]();
-                  }
-
-                  setModalContent(null);
-                }}
-              />
-            </div>
+                          moves[moveName]();
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            )}
           </Modal>
         )}
       </div>
