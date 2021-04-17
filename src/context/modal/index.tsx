@@ -10,12 +10,13 @@ export const ModalContext = React.createContext<IModalContext | null>(null);
 interface IModalContent {
   title: string;
   text: string;
-  yesButtonText: string;
-  yesButtonMoveName?: string;
-  yesButtonArgs?: any[];
-  noButtonText: string;
-  noButtonMoveName?: string;
-  noButtonArgs?: any[];
+  buttons?: IModalButton[];
+}
+
+interface IModalButton {
+  text: string;
+  moveName?: string;
+  moveArgs?: any[];
 }
 
 export const ModalProvider: React.FC = ({ children }) => {

@@ -68,7 +68,7 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
       targetPlayer.character.name !== 'sid ketchum' &&
       (!ctx.activePlayers || ctx.activePlayers[playerID] !== stageNames.discard)
     ) {
-      setError('You can only discard cards at the end of your turn');
+      setError(`Only Sid Ketchum can discard this way`);
       return;
     }
 

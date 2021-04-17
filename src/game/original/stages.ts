@@ -60,7 +60,6 @@ const stages: StageMap<IGameState> = {
       barrelResult: moves.barrelResult,
       takeDamage: moves.takeDamage,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardToReact: moves.discardToReact,
       setActivePlayersStage: moves.setActivePlayersStage,
     },
   },
@@ -91,6 +90,7 @@ const stages: StageMap<IGameState> = {
     moves: {
       discardFromHand: moves.discardFromHand,
       endStage: moves.endStage,
+      discardToReact: moves.discardToReact,
     },
   },
   ragtime: {
@@ -115,17 +115,20 @@ const stages: StageMap<IGameState> = {
     moves: {
       bang: moves.bang,
       endStage: moves.endStage,
+      discardToReact: moves.discardToReact,
     },
   },
   tornado: {
     moves: {
       discardForTornado: moves.discardForTornado,
+      discardToReact: moves.discardToReact,
       endStage: moves.endStage,
     },
   },
   poker: {
     moves: {
       discardForPoker: moves.discardForPoker,
+      discardToReact: moves.discardToReact,
     },
   },
   pickCardForPoker: {
@@ -151,6 +154,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       catbalou: moves.catbalou,
       endStage: moves.endStage,
+      discardToReact: moves.discardToReact,
     },
   },
   [stageNames.pickCardsForBrawl]: {

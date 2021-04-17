@@ -27,7 +27,6 @@ import {
   hasSnake,
   hasActiveSnake,
   hasLemat,
-  getPlayerIdsNotTarget,
 } from './utils';
 import { SelectedCards } from '../../context';
 import { cardsActivatingMollyStarkPower } from '../expansions';
@@ -72,15 +71,13 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
           moveToDiscard(G, ctx, discardedCard);
         }
       } else {
-        if (ctx.events?.setActivePlayers) {
-          ctx.events.setActivePlayers({
-            value: {
-              ...(ctx.activePlayers || {}),
-              [targetPlayerId]: stageNames.discardToPlayCard,
-            },
-            moveLimit: 1,
-          });
-        }
+        setActivePlayers(G, ctx, {
+          value: {
+            ...(ctx.activePlayers || {}),
+            [targetPlayerId]: stageNames.discardToPlayCard,
+          },
+          moveLimit: 1,
+        });
       }
     }
   } else {
@@ -207,15 +204,13 @@ export const setActivePlayersStage = (
     activePlayersObject.moveLimit = moveLimit;
   }
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      ...activePlayersObject,
-      value: {
-        ...(ctx.activePlayers || {}),
-        ...activePlayersObject.value,
-      },
-    });
-  }
+  setActivePlayers(G, ctx, {
+    ...activePlayersObject,
+    value: {
+      ...(ctx.activePlayers || {}),
+      ...activePlayersObject.value,
+    },
+  });
 };
 
 export const dynamiteExplodes = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
@@ -324,12 +319,10 @@ export const jailResult = (G: IGameState, ctx: Ctx) => {
   ctx.effects.clearJail(isFailure);
 
   if (!isFailure && currentPlayer.character.realName === 'vera custer') {
-    if (ctx.events?.setActivePlayers) {
-      ctx.events.setActivePlayers({
-        currentPlayer: stageNames.copyCharacter,
-        moveLimit: 1,
-      });
-    }
+    setActivePlayers(G, ctx, {
+      currentPlayer: stageNames.copyCharacter,
+      moveLimit: 1,
+    });
   }
 };
 
@@ -623,14 +616,12 @@ const kitCarlsonDraw = (G: IGameState, ctx: Ctx) => {
   currentPlayer.secretCards.push(...newCards);
   currentPlayer.cardDrawnAtStartLeft -= 2;
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: {
-        [ctx.currentPlayer]: stageNames.kitCarlsonDiscard,
-      },
-      moveLimit: 1,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    value: {
+      [ctx.currentPlayer]: stageNames.kitCarlsonDiscard,
+    },
+    moveLimit: 1,
+  });
 };
 
 const kitCarlsonDiscard = (G: IGameState, ctx: Ctx, cardIndex: number) => {
@@ -1001,14 +992,12 @@ const duel = (G: IGameState, ctx: Ctx, targetPlayerId: string, sourcePlayerId: s
 
   endStage(G, ctx);
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: {
-        [targetPlayerId]: stageNames.duel,
-      },
-      moveLimit: 1,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    value: {
+      [targetPlayerId]: stageNames.duel,
+    },
+    moveLimit: 1,
+  });
 };
 
 const resetGameStage = (G: IGameState, ctx: Ctx) => {
@@ -1096,12 +1085,10 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
 };
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      currentPlayer: stageNames.discard,
-      moveLimit: numCardsToDiscard,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    currentPlayer: stageNames.discard,
+    moveLimit: numCardsToDiscard,
+  });
 };
 
 export const endStage = (G: IGameState, ctx: Ctx) => {
@@ -1184,25 +1171,21 @@ export const makePlayerDiscardToPlay = (
   targetPlayerId?: string,
   numCards?: number
 ) => {
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: {
-        [targetPlayerId ?? ctx.currentPlayer]: stageNames.discardToPlayCard,
-      },
-      moveLimit: numCards ?? 1,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    value: {
+      [targetPlayerId ?? ctx.currentPlayer]: stageNames.discardToPlayCard,
+    },
+    moveLimit: numCards ?? 1,
+  });
 
   G.reactionRequired.moveToPlayAfterDiscard = cardName;
   G.reactionRequired.moveArgs = [targetPlayerId ?? ctx.currentPlayer];
 };
 
 export const ragtime = (G: IGameState, ctx: Ctx) => {
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      currentPlayer: stageNames.ragtime,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    currentPlayer: stageNames.ragtime,
+  });
 
   resetDiscardStage(G, ctx);
   clearCardsInPlay(G, ctx, ctx.currentPlayer);
@@ -1318,12 +1301,10 @@ export const chuckWengamPower = (G: IGameState, ctx: Ctx) => {
 };
 
 export const docHolyDayPower = (G: IGameState, ctx: Ctx) => {
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      currentPlayer: stageNames.discardToPlayCard,
-      moveLimit: 1,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    currentPlayer: stageNames.discardToPlayCard,
+    moveLimit: 1,
+  });
 };
 
 export const patBrennanEquipmentDraw = (
@@ -1346,12 +1327,10 @@ export const patBrennanEquipmentDraw = (
 export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      currentPlayer: stageNames.joseDelgadoDiscard,
-      moveLimit: 1,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    currentPlayer: stageNames.joseDelgadoDiscard,
+    moveLimit: 1,
+  });
 
   G.reactionRequired.moveToPlayAfterDiscard = 'josedelgadodraw' as CardName;
 
@@ -1406,15 +1385,13 @@ export const snakeResult = (G: IGameState, ctx: Ctx) => {
 export const bandidos = (G: IGameState, ctx: Ctx) => {
   const otherPlayersStages = getOtherPlayersAliveStages(G, ctx, stageNames.bandidos);
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: {
-        [ctx.currentPlayer]: stageNames.bandidos,
-        ...otherPlayersStages,
-      },
-      moveLimit: 2,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    value: {
+      [ctx.currentPlayer]: stageNames.bandidos,
+      ...otherPlayersStages,
+    },
+    moveLimit: 2,
+  });
 };
 
 export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
@@ -1426,11 +1403,9 @@ export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     playerStages[ctx.currentPlayer] = stageNames.fanning;
   }
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: playerStages,
-    });
-  }
+  setActivePlayers(G, ctx, {
+    value: playerStages,
+  });
 
   const bangCard =
     G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
@@ -1580,26 +1555,6 @@ export const lemat = (G: IGameState, ctx: Ctx) => {
   }
 };
 
-export const putPlayersInSavedState = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
-  const playerIdsNotTarget = getPlayerIdsNotTarget(G, ctx, targetPlayerId);
-  let playerStages: { [id: string]: string } = {};
-
-  for (const id of playerIdsNotTarget) {
-    playerStages[id] = stageNames.saved;
-  }
-
-  G.savedState = {
-    previousStages: { ...(ctx.activePlayers || {}) },
-    savedPlayerId: targetPlayerId,
-  };
-
-  if (ctx.events?.setActivePlayers) {
-    ctx.events?.setActivePlayers({
-      value: playerStages,
-    });
-  }
-};
-
 export const putInBeingRobbedStage = (
   G: IGameState,
   ctx: Ctx,
@@ -1647,6 +1602,12 @@ export const giveCardToRobber = (
   clearCardsInPlay(G, ctx, robber.id);
 };
 
+export const setActivePlayers = (G: IGameState, ctx: Ctx, activePlayersArgs: ActivePlayersArg) => {
+  if (ctx.events?.setActivePlayers) {
+    ctx.events.setActivePlayers(activePlayersArgs);
+  }
+};
+
 export const moves_VOS: MoveMap<IGameState> = {
   lastcall,
   snakeResult,
@@ -1658,7 +1619,6 @@ export const moves_VOS: MoveMap<IGameState> = {
   discardForPoker,
   pickCardForPoker,
   lemat,
-  putPlayersInSavedState,
   putInBeingRobbedStage,
   giveCardToRobber,
 };

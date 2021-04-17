@@ -202,6 +202,7 @@ export enum stageNames {
   saved = 'saved',
   reactToRobbery = 'reactToRobbery',
   pickCardsForBrawl = 'pickCardsForBrawl',
+  waiting = 'waiting',
 }
 
 export const stagesReactingToBullets = [

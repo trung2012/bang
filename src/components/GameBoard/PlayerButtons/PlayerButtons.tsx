@@ -9,6 +9,7 @@ import { ReactComponent as CancelIcon } from '../../../assets/cancel.svg';
 import './PlayerButtons.scss';
 import {
   delayBetweenActions,
+  getPlayerWithSavedCard,
   hasActiveDynamite,
   hasActiveSnake,
   IGamePlayer,
@@ -128,6 +129,10 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
 
   const onTakeDamageClick = () => {
     if (!isClientPlayer) return;
+
+    if (getPlayerWithSavedCard(G, ctx, player.id)) {
+      moves.askIfAnyoneWantToSave(player.id);
+    }
 
     moves.takeDamage(player.id);
   };

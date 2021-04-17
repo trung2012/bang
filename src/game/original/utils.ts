@@ -355,3 +355,12 @@ export const getPlayerWithSaved = (G: IGameState, ctx: Ctx, targetPlayerId: stri
 
   return playersNotTarget.find(card => card.name === 'saved');
 };
+
+export const getPlayerWithSavedCard = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  const player = getPlayersNotTargetPlayer(G, ctx, targetPlayerId).find(player =>
+    player.hand.some(card => card.name === 'saved')
+  );
+  if (player) {
+    return player.id;
+  }
+};

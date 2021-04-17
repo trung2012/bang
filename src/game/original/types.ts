@@ -24,9 +24,11 @@ export interface IGameState {
   } | null;
   expansions: ExpansionName[];
   savedState?: {
-    savedPlayerId: string;
-    savingPlayerId?: string;
-    previousStages: Record<string, string> | null;
+    saveeId: string;
+    saverId: string;
+    previousPlayerStages: Record<string, string> | null;
+    moveAfterSaved?: string;
+    moveArgs?: any[];
   };
   brawlPlayersToDiscard: {
     [playerId: string]: boolean;
