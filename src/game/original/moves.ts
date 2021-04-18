@@ -1611,7 +1611,7 @@ export const pickCardForPoker = (
   currentPlayer.hand.push(selectedCard);
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 
-  if (ctx.activePlayers && Object.keys(ctx.activePlayers).length > 0) {
+  if (!ctx.activePlayers) {
     emptyGeneralStore(G, ctx);
   }
 };
