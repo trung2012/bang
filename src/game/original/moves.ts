@@ -1478,11 +1478,7 @@ export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     playerStages[ctx.currentPlayer] = stageNames.fanning;
   }
 
-  if (ctx.events?.setActivePlayers) {
-    ctx.events.setActivePlayers({
-      value: playerStages,
-    });
-  }
+  setActivePlayersStage(G, ctx, playerStages);
 
   const bangCard =
     G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
@@ -1615,6 +1611,12 @@ export const pickCardForPoker = (
   currentPlayer.hand.push(selectedCard);
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 
+  if (ctx.activePlayers && Object.keys(ctx.activePlayers).length > 0) {
+    emptyGeneralStore(G, ctx);
+  }
+};
+
+export const emptyGeneralStore = (G: IGameState, ctx: Ctx) => {
   while (G.generalStore.length > 0) {
     const cardToDiscard = G.generalStore.pop();
 
