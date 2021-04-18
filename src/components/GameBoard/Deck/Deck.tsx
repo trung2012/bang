@@ -48,11 +48,6 @@ export const Deck = () => {
       return;
     }
 
-    if (clientPlayer.cardDrawnAtStartLeft === 1) {
-      moves.drawOneFromDeck();
-      return;
-    }
-
     if (clientPlayer.character.name === 'black jack') {
       moves.blackJackDraw();
       setTimeout(() => {
@@ -68,15 +63,19 @@ export const Deck = () => {
         return;
       }
       case 'pixie pete': {
-        moves.drawThreeFromDeck();
+        moves.drawFromDeck(3);
         return;
       }
       case 'bill noface': {
         moves.billNoFaceDraw();
         return;
       }
+      case 'tuco franziskaner': {
+        moves.tucoFranziskanerDraw();
+        return;
+      }
       default:
-        moves.drawTwoFromDeck();
+        moves.drawFromDeck(2);
         return;
     }
   };

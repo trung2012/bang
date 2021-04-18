@@ -34,6 +34,14 @@ export interface IGameState {
     moveArgs?: any[];
     cardToDiscard?: ICardToDiscard;
   };
+  henryBlockAfterEffects?: {
+    robberId: string;
+    victimId: string;
+    cardIndex: number;
+    move: string;
+    moveArgs: any[];
+    type: RobbingType;
+  };
 }
 
 export interface ICardToDiscard {

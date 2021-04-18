@@ -102,6 +102,18 @@ export const PlayerHandComponent: React.FC<IPlayerCardsProps> = ({ hand, playerI
     }
 
     if (currentPlayer.character.name === 'jesse jones' && currentPlayer.cardDrawnAtStartLeft >= 2) {
+      if (targetPlayer.character.name === 'henry block') {
+        moves.henryBlockBang(
+          currentPlayer.id,
+          playerId,
+          'drawFromPlayerHand',
+          [currentPlayer.id, playerId, index],
+          index,
+          cardLocation
+        );
+        return;
+      }
+
       moves.drawFromPlayerHand(playerID, playerId, index);
       return;
     }

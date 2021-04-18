@@ -1,12 +1,12 @@
 import { INVALID_MOVE } from 'boardgame.io/core';
-import { ActivePlayersArg, Ctx, MoveMap } from 'boardgame.io';
+import { ActivePlayersArg, Ctx } from 'boardgame.io';
 import {
   charactersWithBangPower,
   gunRange,
   stageNames,
   stageNameToRequiredCardsMap,
 } from './constants';
-import { CardName, ICard, ICardToDiscard, IGameState, RobbingType } from './types';
+import { CardName, CharacterName, ICard, ICardToDiscard, IGameState, RobbingType } from './types';
 import {
   isCharacterInGame,
   getOtherPlayersAliveStages,
@@ -37,6 +37,10 @@ import {
 import { SelectedCards } from '../../context';
 import { cardsActivatingMollyStarkPower } from '../expansions';
 
+const resetHenryBlockEffects = (G: IGameState) => {
+  G.henryBlockAfterEffects = undefined;
+};
+
 const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   if (!targetPlayerId) return INVALID_MOVE;
   const targetPlayer = G.players[targetPlayerId];
@@ -47,6 +51,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   }
 
   const currentPlayer = G.players[ctx.currentPlayer];
+  clearCardsInPlay(G, ctx, currentPlayer.id);
   const doesCurrentPlayerHasShotgun = hasShotgun(currentPlayer);
   const cardCausingDamage = targetPlayer.cardsInPlay[0];
   const targetPlayerStage = (ctx.activePlayers
@@ -67,7 +72,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     cardCausingDamage.name === 'bang'
   ) {
     if (hasBounty(targetPlayer)) {
-      drawOneFromDeck(G, ctx); // Only current player can draw
+      drawFromDeck(G, ctx, 1); // Only current player can draw
     }
 
     if (doesCurrentPlayerHasShotgun) {
@@ -193,6 +198,10 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
         targetPlayer.hand.push(cardToDrawFromHand);
       }
     }
+
+    if (G.henryBlockAfterEffects) {
+      continueAfterHenryBlockBang(G, ctx);
+    }
   }
 
   clearCardsInPlay(G, ctx, targetPlayerId);
@@ -311,6 +320,10 @@ export const clearCardsInPlay = (G: IGameState, ctx: Ctx, targetPlayerId: string
       ctx.effects.swoosh();
       G.discarded.push(discardedCard);
     }
+  }
+
+  if (ctx.activePlayers && ctx.activePlayers[targetPlayerId] === stageNames.play) {
+    endStage(G, ctx);
   }
 };
 
@@ -469,18 +482,23 @@ export const playCardToReact = (
     }
   }
 
-  if (ctx.events?.endStage) {
-    ctx.events.endStage();
+  endStage(G, ctx);
 
-    // If you can play card to react, you passed the stage and can now be attacked again
-    reactingPlayer.barrelUseLeft = 1;
-    if (reactingPlayer.character.name === 'jourdonnais') {
-      reactingPlayer.jourdonnaisPowerUseLeft = 1;
-    }
+  if (G.henryBlockAfterEffects) {
+    continueAfterHenryBlockBang(G, ctx);
+  }
+
+  // If you can play card to react, you passed the stage and can now be attacked again
+  reactingPlayer.barrelUseLeft = 1;
+  if (reactingPlayer.character.name === 'jourdonnais') {
+    reactingPlayer.jourdonnaisPowerUseLeft = 1;
   }
 
   if (onlyHandCardToPlay !== null && previousActiveStage === stageNames.duel) {
-    if (previousSourcePlayerId) {
+    if (
+      previousSourcePlayerId &&
+      !(reactingPlayer.character.name === 'mick defender' && onlyHandCardToPlay.name === 'missed')
+    ) {
       duel(G, ctx, previousSourcePlayerId, reactingPlayerId);
     }
   }
@@ -586,31 +604,12 @@ const jail = (G: IGameState, ctx: Ctx, targetPlayerId: string, jailCardIndex: nu
   ctx.effects.jail();
 };
 
-const drawOneFromDeck = (G: IGameState, ctx: Ctx) => {
+const drawFromDeck = (G: IGameState, ctx: Ctx, numberOfCards: number) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  const newCard = G.deck.pop();
-  if (newCard) {
-    currentPlayer.hand.push(newCard);
-  }
-  currentPlayer.cardDrawnAtStartLeft -= 1;
-  currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-};
-
-const drawTwoFromDeck = (G: IGameState, ctx: Ctx) => {
-  const currentPlayer = G.players[ctx.currentPlayer];
-  const newCards: ICard[] = G.deck.slice(G.deck.length - 2, G.deck.length);
-  G.deck = G.deck.slice(0, G.deck.length - 2);
+  const newCards: ICard[] = G.deck.slice(G.deck.length - numberOfCards, G.deck.length);
+  G.deck = G.deck.slice(0, G.deck.length - numberOfCards);
   currentPlayer.hand.push(...newCards);
-  currentPlayer.cardDrawnAtStartLeft -= 2;
-  currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-};
-
-const drawThreeFromDeck = (G: IGameState, ctx: Ctx) => {
-  const currentPlayer = G.players[ctx.currentPlayer];
-  const newCards: ICard[] = G.deck.slice(G.deck.length - 3, G.deck.length);
-  G.deck = G.deck.slice(0, G.deck.length - 3);
-  currentPlayer.hand.push(...newCards);
-  currentPlayer.cardDrawnAtStartLeft = 0;
+  currentPlayer.cardDrawnAtStartLeft -= numberOfCards;
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 };
 
@@ -692,6 +691,10 @@ const drawFromPlayerHand = (
   }
 
   endStage(G, ctx);
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 const blackJackDraw = (G: IGameState, ctx: Ctx) => {
@@ -716,7 +719,7 @@ const blackJackResult = (G: IGameState, ctx: Ctx) => {
     currentPlayer.cardsInPlay[0].suit === 'hearts' ||
     currentPlayer.cardsInPlay[0].suit === 'diamond'
   ) {
-    drawOneFromDeck(G, ctx);
+    drawFromDeck(G, ctx, 1);
   }
 
   let cardFlipped = currentPlayer.cardsInPlay.pop();
@@ -762,6 +765,10 @@ export const barrelResult = (
     }
 
     ctx.effects.missed();
+
+    if (G.henryBlockAfterEffects) {
+      continueAfterHenryBlockBang(G, ctx);
+    }
   }
 };
 
@@ -824,12 +831,30 @@ const bang = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     checkIfCanDrawOneAfterReacting(G, currentPlayer, bangCard);
   }
 
+  clearCardsInPlay(G, ctx, currentPlayer.id);
   endStage(G, ctx);
+};
+
+const heal = (G: IGameState, ctx: Ctx, targetPlayerId: string, amount: number) => {
+  const targetPlayer = G.players[targetPlayerId];
+  targetPlayer.hp = Math.min(targetPlayer.maxHp, targetPlayer.hp + amount);
+  endStage(G, ctx);
+  resetDiscardStage(G, ctx);
 };
 
 const beer = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   const beerCard = currentPlayer.cardsInPlay[0];
+
+  const lemonadeJimIds = isCharacterInGame(G, 'lemonade jim');
+
+  if (lemonadeJimIds?.length) {
+    for (const id of lemonadeJimIds) {
+      if (id !== ctx.currentPlayer) {
+        askLemonadeJim(G, ctx, id);
+      }
+    }
+  }
 
   if (ctx.phase !== 'suddenDeath' && beerCard.name === 'beer') {
     if (beerCard) {
@@ -859,6 +884,10 @@ const catbalou = (
     G.robberyState = null;
     clearCardsInPlay(G, ctx, targetPlayerId);
     endStage(G, ctx);
+  }
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
   }
 };
 
@@ -913,6 +942,10 @@ const panic = (
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 
   endStage(G, ctx);
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 const saloon = (G: IGameState, ctx: Ctx) => {
@@ -1154,10 +1187,17 @@ export const copyCharacter = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
   }
 };
 
-export const reselectCharacter = (G: IGameState, ctx: Ctx) => {
+export const reselectCharacter = (G: IGameState, ctx: Ctx, characterName?: CharacterName) => {
   let currentPlayer = G.players[ctx.currentPlayer];
   const randomIndex = Math.floor(Math.random() * G.characters.length);
-  const newCharacter = G.characters.splice(randomIndex, 1)[0];
+  let newCharacter = G.characters.splice(randomIndex, 1)[0];
+
+  if (characterName) {
+    const foundCharacter = G.characters.find(c => c.name === characterName);
+    if (foundCharacter) {
+      newCharacter = foundCharacter;
+    }
+  }
 
   if (newCharacter) {
     const newPlayer = {
@@ -1316,15 +1356,10 @@ export const canteen = (G: IGameState, ctx: Ctx) => {
 
 export const billNoFaceDraw = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  drawOneFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 1);
   const lostHp = currentPlayer.maxHp - currentPlayer.hp;
 
-  if (currentPlayer.character.name === 'bill noface') {
-    const newCards: ICard[] = G.deck.slice(G.deck.length - lostHp, G.deck.length);
-    G.deck = G.deck.slice(0, G.deck.length - lostHp);
-    currentPlayer.hand.push(...newCards);
-    currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
-  }
+  drawFromDeck(G, ctx, lostHp);
 
   currentPlayer.cardDrawnAtStartLeft = 0;
 };
@@ -1332,7 +1367,7 @@ export const billNoFaceDraw = (G: IGameState, ctx: Ctx) => {
 export const chuckWengamPower = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   currentPlayer.hp -= 1;
-  drawTwoFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 2);
 };
 
 export const patBrennanEquipmentDraw = (
@@ -1350,6 +1385,10 @@ export const patBrennanEquipmentDraw = (
   currentPlayer.hand.push(cardToTake);
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
   currentPlayer.cardDrawnAtStartLeft = 0;
+
+  if (G.henryBlockAfterEffects) {
+    resetHenryBlockEffects(G);
+  }
 };
 
 export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
@@ -1370,7 +1409,7 @@ export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
 };
 
 export const josedelgadodraw = (G: IGameState, ctx: Ctx) => {
-  drawTwoFromDeck(G, ctx);
+  drawFromDeck(G, ctx, 2);
 };
 
 // Valley of shadows
@@ -1698,28 +1737,16 @@ export const evelynShebangPower = (G: IGameState, ctx: Ctx, numberOfTargets: num
 
 export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
-  const bangCard = G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
-    G.players[targetPlayerId].cardsInPlay[0] || { id: 1, name: 'no card' };
 
-  if (bangCard) {
-    let activePlayersValue = {
-      ...(ctx.activePlayers || {}),
-    };
+  let activePlayersValue = {
+    ...(ctx.activePlayers || {}),
+  };
 
-    if (bangCard.name === 'bang') {
-      activePlayersValue[targetPlayerId] = stageNames.reactToBang;
-    } else {
-      activePlayersValue[targetPlayerId] = stageNames.reactToBangWithoutBang;
-    }
+  activePlayersValue[targetPlayerId] = stageNames.reactToBang;
 
-    if (ctx.events?.setActivePlayers) {
-      ctx.events?.setActivePlayers({
-        value: activePlayersValue,
-      });
-    }
-  }
+  setActivePlayersStage(G, ctx, activePlayersValue);
 
-  ctx.effects.gunshot(bangCard.id);
+  ctx.effects.gunshot('1');
 
   G.reactionRequired = {
     quantity: 1,
@@ -1737,10 +1764,7 @@ export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
   const playerStages = ctx.activePlayers ?? {};
   let countPlayersReactingToBang = 0;
   for (const key in playerStages) {
-    if (
-      playerStages[key] === stageNames.reactToBang ||
-      playerStages[key] === stageNames.reactToBangWithoutBang
-    ) {
+    if (playerStages[key] === stageNames.reactToBang) {
       countPlayersReactingToBang++;
     }
   }
@@ -1750,13 +1774,67 @@ export const bangWithPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) =
       currentPlayer.character.name === 'evelyn shebang' &&
       currentPlayer.cardDrawnAtStartLeft === 0 &&
       countPlayersReactingToBang < 1
-    )
+    ) &&
+    !G.henryBlockAfterEffects
   ) {
     endStage(G, ctx);
   }
 };
 
-export const moves_VOS: MoveMap<IGameState> = {
+export const tucoFranziskanerDraw = (G: IGameState, ctx: Ctx) => {
+  const currentPlayer = G.players[ctx.playerID ?? ctx.currentPlayer];
+  drawFromDeck(G, ctx, 2);
+
+  if (currentPlayer.equipments.length === 0) {
+    drawFromDeck(G, ctx, 2);
+  }
+};
+
+const askLemonadeJim = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  setActivePlayersStage(G, ctx, {
+    [ctx.currentPlayer]: stageNames.play,
+    [targetPlayerId]: stageNames.askLemonadeJim,
+  });
+};
+
+const lemonadeJimPower = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  makePlayerDiscardToPlay(G, ctx, 'heal' as CardName, targetPlayerId, 2, [1]);
+};
+
+export const continueAfterHenryBlockBang = (G: IGameState, ctx: Ctx) => {
+  setActivePlayersStage(
+    G,
+    ctx,
+    {
+      [ctx.currentPlayer]: stageNames.continueAfterHenryBlockBang,
+    },
+    1
+  );
+};
+
+export const henryBlockBang = (
+  G: IGameState,
+  ctx: Ctx,
+  targetPlayerId: string,
+  henryBlockId: string,
+  move: string,
+  moveArgs: any[],
+  cardIndex: number,
+  type: RobbingType
+) => {
+  G.henryBlockAfterEffects = {
+    robberId: targetPlayerId,
+    victimId: henryBlockId,
+    move,
+    moveArgs,
+    cardIndex,
+    type,
+  };
+
+  bangWithPower(G, ctx, targetPlayerId);
+};
+
+export const moves_VOS = {
   lastcall,
   snakeResult,
   bandidos,
@@ -1775,9 +1853,14 @@ export const moves_VOS: MoveMap<IGameState> = {
   derSpotBurstRingerPower,
   evelynShebangPower,
   bangWithPower,
+  tucoFranziskanerDraw,
+  askLemonadeJim,
+  lemonadeJimPower,
+  henryBlockBang,
+  continueAfterHenryBlockBang,
 };
 
-export const moves_DodgeCity: MoveMap<IGameState> = {
+export const moves_DodgeCity = {
   equipGreenCard,
   ragtime,
   springfield,
@@ -1801,11 +1884,9 @@ export const moves_DodgeCity: MoveMap<IGameState> = {
   pickCardsForBrawl,
 };
 
-export const moves: MoveMap<IGameState> = {
+export const moves = {
   takeDamage,
-  drawOneFromDeck,
-  drawTwoFromDeck,
-  drawThreeFromDeck,
+  drawFromDeck,
   barrelResult,
   drawFromPlayerHand,
   discardFromHand,
@@ -1847,6 +1928,10 @@ export const moves: MoveMap<IGameState> = {
   discardToReact,
   equipOtherPlayer,
   setActivePlayersStage,
+  tucoFranziskanerDraw,
+  heal,
+  resetGameStage,
+  resetHenryBlockEffects,
 };
 
 const allMoves = {

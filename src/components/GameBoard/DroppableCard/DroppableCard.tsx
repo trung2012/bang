@@ -53,8 +53,9 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
   const onDrop = (data: IDraggableCardData) => {
     const { sourceCard, sourceCardIndex, sourcePlayerId, sourceCardLocation } = data;
     const sourcePlayer = players[sourcePlayerId];
+    const targetPlayer = players[playerId];
 
-    if (players[playerId].hp <= 0) return;
+    if (targetPlayer.hp <= 0) return;
 
     if (hasActiveDynamite(sourcePlayer)) {
       setError('Please draw for dynamite');
@@ -114,6 +115,18 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
         }, delayBetweenActions);
         return;
       } else {
+        if (targetPlayer.character.name === 'henry block') {
+          moves.henryBlockBang(
+            sourcePlayerId,
+            playerId,
+            'putInBeingRobbedStage',
+            [playerId, index, cardLocation, sourceCard.name],
+            index,
+            cardLocation
+          );
+          return;
+        }
+
         moves.putInBeingRobbedStage(playerId, index, cardLocation, sourceCard.name);
       }
     } else {

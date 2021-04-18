@@ -11,6 +11,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       endStage: moves.endStage,
       bang: moves.bang,
+      heal: moves.heal,
     },
   },
   [stageNames.clickToBang]: {
@@ -67,7 +68,6 @@ const stages: StageMap<IGameState> = {
       barrelResult: moves.barrelResult,
       takeDamage: moves.takeDamage,
       clearCardsInPlay: moves.clearCardsInPlay,
-      discardToReact: moves.discardToReact,
       setActivePlayersStage: moves.setActivePlayersStage,
     },
   },
@@ -146,11 +146,6 @@ const stages: StageMap<IGameState> = {
       playCard: moves.playCard,
     },
   },
-  saved: {
-    moves: {
-      saveAnotherPlayer: moves.saveAnotherPlayer,
-    },
-  },
   [stageNames.reactToRobbery]: {
     moves: {
       playCardToReact: moves.playCardToReact,
@@ -163,6 +158,23 @@ const stages: StageMap<IGameState> = {
   [stageNames.pickCardsForBrawl]: {
     moves: {
       pickCardsForBrawl: moves.pickCardsForBrawl,
+    },
+  },
+  [stageNames.askLemonadeJim]: {
+    moves: {
+      lemonadeJimPower: moves.lemonadeJimPower,
+      endStage: moves.endStage,
+    },
+  },
+  [stageNames.reactToHenryBlockBang]: {
+    moves: {
+      playCardToReact: moves.playCardToReact,
+      drawToReact: moves.drawToReact,
+      barrelResult: moves.barrelResult,
+      takeDamage: moves.takeDamage,
+      clearCardsInPlay: moves.clearCardsInPlay,
+      discardToReact: moves.discardToReact,
+      endStage: moves.endStage,
     },
   },
 };
