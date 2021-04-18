@@ -55,7 +55,10 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
       switch (clientPlayerStage) {
         case stageNames.fanning: {
           const firstTargetId = ctx.playOrder.find(
-            id => !!ctx.activePlayers && ctx.activePlayers[id] === stageNames.reactToBang
+            id =>
+              !!ctx.activePlayers &&
+              (ctx.activePlayers[id] === stageNames.reactToBang ||
+                ctx.activePlayers[id] === stageNames.reactToBangWithoutBang)
           );
 
           if (firstTargetId === undefined) {
