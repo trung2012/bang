@@ -350,7 +350,22 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
   }, [clientPlayer.character.realName, ctx.activePlayers, playerID, setNotification]);
 
   if (player.hp <= 0 && !isGhost) {
-    return <PlayerDead player={player} />;
+    return (
+      <Droppable accepts='card' onDrop={onDrop}>
+        {dragState => (
+          <div
+            className={classnames('player-info', {
+              'player-info--active': isActivePlayer,
+              'player-info--reacting': isReactingPlayer,
+            })}
+            onClick={onPlayerClick}
+            {...dragState.events}
+          >
+            <PlayerDead player={player} />
+          </div>
+        )}
+      </Droppable>
+    );
   }
 
   return (

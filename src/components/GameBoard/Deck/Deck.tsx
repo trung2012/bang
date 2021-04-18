@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
-import { delayBetweenActions, hasActiveSnake } from '../../../game';
+import { animationDelayMilliseconds, delayBetweenActions, hasActiveSnake } from '../../../game';
 import { hasActiveDynamite, isJailed } from '../../../game';
 import { CardPile } from './CardPile';
 import classnames from 'classnames';
@@ -8,6 +8,7 @@ import './Deck.scss';
 import Tippy from '@tippyjs/react';
 
 export const Deck = () => {
+  const [isDeckDisabled, setIsDeckDisabled] = useState(false);
   const { G, ctx, isActive, playerID, moves } = useGameContext();
   const { setError } = useErrorContext();
   const { deck } = G;
@@ -15,6 +16,11 @@ export const Deck = () => {
 
   const onDeckClick = () => {
     if (!isActive) return;
+
+    setIsDeckDisabled(true);
+    setTimeout(() => {
+      setIsDeckDisabled(false);
+    }, animationDelayMilliseconds);
 
     if (playerID === ctx.currentPlayer && hasActiveDynamite(clientPlayer)) {
       moves.drawToReact(playerID);
@@ -90,7 +96,7 @@ export const Deck = () => {
           })}
           cards={deck}
           isFacedUp={false}
-          onClick={onDeckClick}
+          onClick={isDeckDisabled ? () => {} : onDeckClick}
         />
       </div>
     </Tippy>

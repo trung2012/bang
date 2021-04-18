@@ -70,7 +70,7 @@ export const cards_VOS: ICard[] = [
       'https://res.cloudinary.com/trungpham/image/upload/v1606888441/bang/valley%20of%20shadows/07_mira_mwmfi5.png',
     suit: 'clubs',
     type: 'action',
-    isTargeted: false,
+    isTargeted: true,
     playWithBang: true,
   },
   {

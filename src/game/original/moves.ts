@@ -147,6 +147,8 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
         discardGreenEquipments(G, ctx, targetPlayerId);
       }
     }
+
+    endTurn(G, ctx);
   } else {
     if (!doesCurrentPlayerHasShotgun || targetPlayer.hand.length === 0) {
       endStage(G, ctx);
@@ -1436,10 +1438,6 @@ export const snakeResult = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
   const snakeCard = hasSnake(currentPlayer);
 
-  if (snakeCard) {
-    snakeCard.timer = 1;
-  }
-
   const isFailure = currentPlayer.cardsInPlay.every(card => card.suit === 'spades');
 
   if (isFailure) {
@@ -1448,6 +1446,12 @@ export const snakeResult = (G: IGameState, ctx: Ctx) => {
 
   if (currentPlayer.character.realName && !isJailed(currentPlayer)) {
     setVeraCusterStage(ctx);
+  }
+
+  clearCardsInPlay(G, ctx, ctx.currentPlayer);
+
+  if (snakeCard) {
+    snakeCard.timer = 1;
   }
 };
 
