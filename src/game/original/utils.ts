@@ -78,7 +78,7 @@ export const getOtherPlayersAliveStages = (G: IGameState, ctx: Ctx, stageName: s
 export const getOtherPlayersAlive = (G: IGameState, ctx: Ctx) => {
   return ctx.playOrder
     .map(id => G.players[id])
-    .filter(player => player.hp > 0 && player.id !== ctx.currentPlayer);
+    .filter(player => (player.hp > 0 || isPlayerGhost(player)) && player.id !== ctx.currentPlayer);
 };
 
 export const shuffle = (ctx: Ctx, array: any[]) => {
