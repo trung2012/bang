@@ -60,26 +60,31 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           });
           break;
         }
-        case stageNames.continueAfterHenryBlockBang: {
-          const moveName = G.henryBlockAfterEffects?.move;
-          const moveArgs = G.henryBlockAfterEffects?.moveArgs;
-
-          if (isActive && moveName && moves[moveName] && moveArgs) {
-            moves[moveName](...moveArgs);
-            return;
-          }
-        }
       }
     }
-  }, [
-    G.henryBlockAfterEffects,
-    isActive,
-    moves,
-    playerCurrentStage,
-    playerID,
-    setModalContent,
-    setNotification,
-  ]);
+  }, [moves, playerCurrentStage, playerID, setModalContent, setNotification]);
+
+  useEffect(() => {
+    if (playerCurrentStage === stageNames.continueAfterHenryBlockBang) {
+      const moveName = G.henryBlockAfterEffects?.move;
+      const moveArgs = G.henryBlockAfterEffects?.moveArgs;
+
+      if (isActive && moveName && moves[moveName] && moveArgs) {
+        setModalContent({
+          title: 'Continue',
+          text: 'Please click continue',
+          buttons: [
+            {
+              text: 'Continue',
+              moveName,
+              moveArgs,
+            },
+          ],
+        });
+        return;
+      }
+    }
+  }, [G.henryBlockAfterEffects, isActive, moves, playerCurrentStage, setModalContent]);
 
   const onEndTurnClick = () => {
     if (!isClientPlayer || !isActive) {
