@@ -2,7 +2,7 @@ import { keyframes } from '@emotion/core';
 import styled from '@emotion/styled';
 import React, { useEffect, useState } from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
-import { hasActiveSnake, stageNames } from '../../../game';
+import { doesPlayerNeedToDraw, hasActiveSnake, isPlayerGhost, stageNames } from '../../../game';
 import { ICard } from '../../../game';
 import { hasActiveDynamite, isJailed } from '../../../game';
 import { DraggableCard } from '../DraggableCard';
@@ -62,8 +62,8 @@ export const PlayerHandComponent: React.FC<IPlayerCardsProps> = ({ hand, playerI
   const { setError } = useErrorContext();
   const clientPlayer = G.players[playerID!];
   const targetPlayer = G.players[playerId];
-  const isPlayerDead = targetPlayer.hp <= 0;
-  const isFacedUp = playerId === playerID || isPlayerDead;
+  const isPlayerDead = targetPlayer.hp <= 0 && !isPlayerGhost(targetPlayer);
+  const isFacedUp = playerId === playerID || !!isPlayerDead;
   const [shouldAnimate, setShouldAnimate] = useState(true);
   const maxCardRotationAngle = Math.min(hand.length * 25, 135);
   const cardLocation = 'hand';
@@ -85,6 +85,11 @@ export const PlayerHandComponent: React.FC<IPlayerCardsProps> = ({ hand, playerI
     const currentPlayerStage = (ctx.activePlayers
       ? ctx.activePlayers[currentPlayer.id]
       : 'none') as stageNames;
+
+    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
 
     if (hasActiveDynamite(clientPlayer)) {
       setError('Please draw for dynamite');

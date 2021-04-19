@@ -63,7 +63,7 @@ export const characters_VOS: ICharacter[] = [
   },
   {
     name: 'tuco franziskaner',
-    hp: 4,
+    hp: 5,
     description: 'During your draw phase, if you have no blue cards in play, draw 2 extra cards',
     imageUrl:
       'https://res.cloudinary.com/trungpham/image/upload/v1606888442/bang/valley%20of%20shadows/07_tucofranziskaner_ysy1pj.png',

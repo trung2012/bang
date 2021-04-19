@@ -39,11 +39,7 @@ const phases: IGamePhases = {
     next: 'main',
     endIf: (G: IGameState, ctx: Ctx) => ctx.turn > ctx.playOrder.length,
   },
-  main: {
-    endIf: (G: IGameState) => Object.keys(G.players).length === 2,
-    next: 'suddenDeath',
-  },
-  suddenDeath: {},
+  main: {},
 };
 
 export default phases;

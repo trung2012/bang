@@ -5,6 +5,7 @@ import {
   animationDelayMilliseconds,
   cardsThatCanTargetsSelf,
   cardsWhichTargetCards,
+  doesPlayerNeedToDraw,
   hasActiveDynamite,
   hasActiveSnake,
   IGamePlayer,
@@ -122,7 +123,11 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
     const { sourceCard, sourceCardIndex, sourcePlayerId, sourceCardLocation } = data;
     const sourcePlayer = players[sourcePlayerId];
 
-    if (player.hp <= 0) return;
+    if (doesPlayerNeedToDraw(sourcePlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
+
     if (sourcePlayerId === player.id && !cardsThatCanTargetsSelf.includes(sourceCard.name)) return;
 
     if (hasActiveDynamite(sourcePlayer)) {
@@ -168,11 +173,17 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
       return;
     }
 
-    if (
-      clientPlayerStage === stageNames.lemat &&
-      sourcePlayer.numBangsLeft > 0 &&
-      sourcePlayer.gunRange >= distanceBetweenPlayers
-    ) {
+    if (clientPlayerStage === stageNames.lemat) {
+      if (sourcePlayer.numBangsLeft <= 0) {
+        setError('You cannot play any more bangs');
+        return;
+      }
+
+      if (sourcePlayer.gunRange < distanceBetweenPlayers) {
+        setError('Target out of range');
+        return;
+      }
+
       moves.playCard(sourceCardIndex, player.id, sourceCardLocation);
       moves.bang(player.id);
       return;
@@ -356,14 +367,7 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
     return (
       <Droppable accepts='card' onDrop={onDrop}>
         {dragState => (
-          <div
-            className={classnames('player-info', {
-              'player-info--active': isActivePlayer,
-              'player-info--reacting': isReactingPlayer,
-            })}
-            onClick={onPlayerClick}
-            {...dragState.events}
-          >
+          <div onClick={onPlayerClick} {...dragState.events}>
             <PlayerDead player={player} />
           </div>
         )}

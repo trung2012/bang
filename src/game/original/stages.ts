@@ -144,6 +144,7 @@ const stages: StageMap<IGameState> = {
     moves: {
       bang: moves.bang,
       playCard: moves.playCard,
+      endStage: moves.endStage,
     },
   },
   [stageNames.reactToRobbery]: {

@@ -54,6 +54,11 @@ export const Deck = () => {
       return;
     }
 
+    if (clientPlayer.cardDrawnAtStartLeft === 1) {
+      moves.drawFromDeck(1);
+      return;
+    }
+
     if (clientPlayer.character.name === 'black jack') {
       moves.blackJackDraw();
       setTimeout(() => {

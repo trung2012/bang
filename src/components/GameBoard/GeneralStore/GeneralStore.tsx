@@ -1,12 +1,13 @@
 import React from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
-import { stageNames } from '../../../game';
+import { checkIfAnyoneInStage, stageNames } from '../../../game';
 import { Card } from '../Card';
 
 export const GeneralStore = () => {
   const { G, ctx, moves, playerID } = useGameContext();
   const { setError } = useErrorContext();
   const { generalStore } = G;
+  const isInPokerDiscardStage = checkIfAnyoneInStage(ctx.activePlayers, stageNames.poker);
 
   const pickFromGeneralStore = (index: number) => {
     if (ctx.activePlayers && ctx.activePlayers[playerID!] === stageNames.pickCardForPoker) {
@@ -31,7 +32,7 @@ export const GeneralStore = () => {
           <Card
             key={card.id}
             card={card}
-            isFacedUp={true}
+            isFacedUp={!isInPokerDiscardStage}
             onClick={() => pickFromGeneralStore(index)}
           />
         );

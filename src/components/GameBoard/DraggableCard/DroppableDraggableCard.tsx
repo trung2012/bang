@@ -9,6 +9,7 @@ import {
   delayBetweenActions,
   ICard,
   cardsWithNoRangeLimit,
+  doesPlayerNeedToDraw,
 } from '../../../game';
 import { calculateDistanceFromTarget } from '../../../utils';
 import { IDraggableCardData } from './DraggableCard.types';
@@ -39,10 +40,13 @@ export const DroppableDraggableCard: React.FC<IDroppableDraggableCardProps> = ({
 
   const onDrop = (data: IDraggableCardData) => {
     const { sourceCard, sourceCardIndex, sourcePlayerId, sourceCardLocation } = data;
-
-    if (players[playerId].hp <= 0) return;
-
     const sourcePlayer = players[sourcePlayerId];
+
+    if (doesPlayerNeedToDraw(sourcePlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
+
     const distanceBetweenPlayers = calculateDistanceFromTarget(
       players,
       ctx.playOrder,

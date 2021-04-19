@@ -2,6 +2,7 @@ import React from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
 import {
   delayBetweenActions,
+  doesPlayerNeedToDraw,
   hasActiveDynamite,
   hasActiveSnake,
   isJailed,
@@ -21,12 +22,16 @@ export const PlayerEquipments: React.FC<IPlayerEquipments> = ({ playerId, equipm
   const { setError } = useErrorContext();
   const { players } = G;
   const cardLocation = 'equipment';
+  const targetPlayer = players[playerId];
 
   const onEquipmentClick = (equipmentCard: ICard, index: number) => {
     if (!isActive || playerID === null) return;
-
     const sourcePlayer = players[playerID];
-    const targetPlayer = players[playerId];
+
+    if (doesPlayerNeedToDraw(sourcePlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
 
     //Process clicking on other people's equipments
     if (

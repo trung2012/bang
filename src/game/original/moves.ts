@@ -33,6 +33,8 @@ import {
   hasActiveSnake,
   hasLemat,
   getPlayerIdsNotTarget,
+  generatePlayersStages,
+  isSuddenDeathOn,
 } from './utils';
 import { SelectedCards } from '../../context';
 import { cardsActivatingMollyStarkPower } from '../expansions';
@@ -47,6 +49,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
 
   if (isPlayerGhost(targetPlayer)) {
     endStage(G, ctx);
+    clearCardsInPlay(G, ctx, targetPlayerId);
     return G;
   }
 
@@ -102,7 +105,7 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     targetPlayer.jourdonnaisPowerUseLeft = 1;
   }
 
-  if (targetPlayer.hp <= 0 && ctx.phase !== 'suddenDeath') {
+  if (targetPlayer.hp <= 0 && !isSuddenDeathOn(G, ctx)) {
     checkIfBeersCanSave(G, ctx, targetPlayer);
   }
 
@@ -148,7 +151,9 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
       }
     }
 
-    endTurn(G, ctx);
+    if (targetPlayer.id === ctx.currentPlayer) {
+      endTurn(G, ctx);
+    }
   } else {
     if (!doesCurrentPlayerHasShotgun || targetPlayer.hand.length === 0) {
       endStage(G, ctx);
@@ -324,7 +329,11 @@ export const clearCardsInPlay = (G: IGameState, ctx: Ctx, targetPlayerId: string
     }
   }
 
-  if (ctx.activePlayers && ctx.activePlayers[targetPlayerId] === stageNames.play) {
+  if (
+    ctx.activePlayers &&
+    ctx.activePlayers[targetPlayerId] === stageNames.play &&
+    ctx.activePlayers[ctx.currentPlayer] !== stageNames.lemat
+  ) {
     endStage(G, ctx);
   }
 };
@@ -834,7 +843,10 @@ const bang = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   }
 
   clearCardsInPlay(G, ctx, currentPlayer.id);
-  endStage(G, ctx);
+
+  if (ctx.activePlayers && ctx.activePlayers[currentPlayer.id] !== stageNames.lemat) {
+    endStage(G, ctx);
+  }
 };
 
 const heal = (G: IGameState, ctx: Ctx, targetPlayerId: string, amount: number) => {
@@ -858,7 +870,7 @@ const beer = (G: IGameState, ctx: Ctx) => {
     }
   }
 
-  if (ctx.phase !== 'suddenDeath' && beerCard.name === 'beer') {
+  if (!isSuddenDeathOn(G, ctx) && beerCard.name === 'beer') {
     if (beerCard) {
       ctx.effects.beer(beerCard.id);
     }
@@ -1548,12 +1560,14 @@ export const discardForTornado = (
 };
 
 export const poker = (G: IGameState, ctx: Ctx) => {
-  const activePlayers = getOtherPlayersAliveStages(G, ctx, stageNames.poker);
+  const activePlayers = getOtherPlayersAlive(G, ctx);
+  const playersWithAtLeastOneCard = activePlayers.filter(player => player.hand.length > 0);
+  const playerStages = generatePlayersStages(playersWithAtLeastOneCard, stageNames.poker);
 
   if (ctx.events?.setActivePlayers) {
     ctx.events?.setActivePlayers({
       currentPlayer: stageNames.play,
-      value: activePlayers,
+      value: playerStages,
       moveLimit: 1,
     });
   }
@@ -1574,25 +1588,18 @@ export const discardForPoker = (
 
   if (ctx.activePlayers && Object.keys(ctx.activePlayers).length === 1) {
     const wasAnyAceDiscarded = G.generalStore.some(card => card.value === 14);
-    const otherPlayersAlive = getOtherPlayersAlive(G, ctx);
 
     if (!wasAnyAceDiscarded) {
       if (ctx.events?.setActivePlayers) {
         ctx.events?.setActivePlayers({
           currentPlayer: stageNames.pickCardForPoker,
-          moveLimit: Math.min(otherPlayersAlive.length, 2),
+          moveLimit: Math.min(G.generalStore.length, 2),
         });
 
         G.reactingOrder = [ctx.currentPlayer];
       }
     } else {
-      while (G.generalStore.length > 0) {
-        const cardToDiscard = G.generalStore.pop();
-
-        if (cardToDiscard) {
-          G.discarded.push(cardToDiscard);
-        }
-      }
+      emptyGeneralStore(G, ctx);
     }
 
     endStage(G, ctx);

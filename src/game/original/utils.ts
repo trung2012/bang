@@ -1,4 +1,4 @@
-import { Ctx } from 'boardgame.io';
+import { ActivePlayers, Ctx } from 'boardgame.io';
 import { INVALID_MOVE } from 'boardgame.io/core';
 import { calculateDistanceFromTarget } from '../../utils';
 import {
@@ -9,7 +9,7 @@ import {
   characters_VOS,
 } from '../expansions';
 import { ExpansionName } from './config';
-import { gunRange, stageNames } from './constants';
+import { charactersWithDrawPower, gunRange, stageNames } from './constants';
 import {
   IGameState,
   IGamePlayer,
@@ -75,6 +75,15 @@ export const getOtherPlayersAliveStages = (G: IGameState, ctx: Ctx, stageName: s
   return activePlayers;
 };
 
+export const generatePlayersStages = (players: IGamePlayer[], stageName: stageNames) => {
+  const activePlayers = players.reduce((players, player) => {
+    players[player.id] = stageName;
+    return players;
+  }, {} as { [key: string]: any });
+
+  return activePlayers;
+};
+
 export const getOtherPlayersAlive = (G: IGameState, ctx: Ctx) => {
   return ctx.playOrder
     .map(id => G.players[id])
@@ -114,7 +123,7 @@ export const processCardRemoval = (
 };
 
 export const checkIfBeersCanSave = (G: IGameState, ctx: Ctx, targetPlayer: IGamePlayer) => {
-  if (ctx.phase !== 'suddenDeath') {
+  if (isSuddenDeathOn(G, ctx)) {
     const beerCardIndexes = targetPlayer.hand
       .map((card, index) => (card.name === 'beer' ? index : -1))
       .filter(index => index !== -1);
@@ -188,7 +197,7 @@ export const checkIfCanDrawOneAfterReacting = (
 };
 
 export const resetCardTimer = (card: ICard) => {
-  if (card && card.timer !== undefined) {
+  if (card && card.timer !== undefined && card.name !== 'rattlesnake') {
     card.timer = 1;
   }
 };
@@ -360,4 +369,31 @@ export const getPlayerWithSaved = (G: IGameState, ctx: Ctx, targetPlayerId: stri
   const playersNotTarget = getPlayersNotTargetPlayer(G, ctx, targetPlayerId);
 
   return playersNotTarget.find(card => card.name === 'saved');
+};
+
+export const doesPlayerNeedToDraw = (player: IGamePlayer, ctx: Ctx) =>
+  player.id === ctx.currentPlayer &&
+  player.cardDrawnAtStartLeft >= 2 &&
+  !charactersWithDrawPower.includes(player.character.name) &&
+  !ctx.activePlayers?.[player.id];
+
+export const checkIfAnyoneInStage = (
+  activePlayers: ActivePlayers | null,
+  stageName: stageNames
+) => {
+  const activePlayersStages = activePlayers ?? {};
+  return Object.keys(activePlayersStages).some(
+    key => activePlayersStages && activePlayersStages[key] === stageName
+  );
+};
+
+export const getPlayersAlive = (G: IGameState, ctx: Ctx) => {
+  return ctx.playOrder
+    .map(id => G.players[id])
+    .filter(player => player.hp > 0 || isPlayerGhost(player));
+};
+
+export const isSuddenDeathOn = (G: IGameState, ctx: Ctx) => {
+  const playersAlive = getPlayersAlive(G, ctx);
+  return playersAlive.length === 2;
 };

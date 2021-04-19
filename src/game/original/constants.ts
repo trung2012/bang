@@ -293,3 +293,15 @@ export const charactersWithBangPower: CharacterName[] = [
   'black flower',
   'evelyn shebang',
 ];
+
+export const charactersWithDrawPower: CharacterName[] = [
+  'jesse jones',
+  'pat brennan',
+  'evelyn shebang',
+];
+
+export const stagesThatAllowCancel = [
+  stageNames.discard,
+  stageNames.discardToPlayCard,
+  stageNames.lemat,
+];

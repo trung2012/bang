@@ -5,6 +5,7 @@ import { useCardsContext, useErrorContext, useGameContext } from '../../../conte
 import {
   canPlayCardToReact,
   delayBetweenActions,
+  doesPlayerNeedToDraw,
   hasActiveDynamite,
   hasActiveSnake,
   isJailed,
@@ -61,7 +62,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
 
   const onDiscardClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.stopPropagation();
-    const targetPlayer = players[playerId];
+    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
+
     if (playerID !== playerId) return;
 
     if (
@@ -78,6 +83,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
   const onCardClickToReact = () => {
     if (!isActive || playerID === null) {
       setError(`Something went wrong`);
+      return;
+    }
+
+    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
+      setError('Please draw first');
       return;
     }
 
@@ -229,6 +239,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
   };
 
   const onCardClickToPlay = () => {
+    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
+
     if (
       playerID !== playerId &&
       cardLocation === 'green' &&

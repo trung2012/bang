@@ -3,6 +3,7 @@ import { Droppable } from 'react-dragtastic';
 import {
   cardsWhichTargetCards,
   cardsWithNoRangeLimit,
+  doesPlayerNeedToDraw,
   hasActiveDynamite,
   hasActiveSnake,
   ICard,
@@ -55,7 +56,10 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
     const sourcePlayer = players[sourcePlayerId];
     const targetPlayer = players[playerId];
 
-    if (targetPlayer.hp <= 0) return;
+    if (doesPlayerNeedToDraw(sourcePlayer, ctx)) {
+      setError('Please draw first');
+      return;
+    }
 
     if (hasActiveDynamite(sourcePlayer)) {
       setError('Please draw for dynamite');

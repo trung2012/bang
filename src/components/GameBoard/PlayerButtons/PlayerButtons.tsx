@@ -9,6 +9,7 @@ import { ReactComponent as CancelIcon } from '../../../assets/cancel.svg';
 import './PlayerButtons.scss';
 import {
   delayBetweenActions,
+  doesPlayerNeedToDraw,
   getOtherPlayersAlive,
   hasActiveDynamite,
   hasActiveSnake,
@@ -17,6 +18,7 @@ import {
   isPlayerGhost,
   stageNames,
   stagesReactingToBullets,
+  stagesThatAllowCancel,
 } from '../../../game';
 import useSound from 'use-sound';
 import { IModalButton, useModalContext } from '../../../context/modal';
@@ -89,6 +91,11 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
   const onEndTurnClick = () => {
     if (!isClientPlayer || !isActive) {
       setError('You cannot perform this action right now');
+      return;
+    }
+
+    if (doesPlayerNeedToDraw(player, ctx)) {
+      setError('Please draw first');
       return;
     }
 
@@ -271,8 +278,11 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
               <DamageIcon className='player-button-icon damage-icon' />
             </PlayerButton>
           )}
-          {playerCurrentStage in [stageNames.discard, stageNames.discardToPlayCard] && (
-            <PlayerButton tooltipTitle='Cancel' onClick={() => moves.endStage()}>
+          {stagesThatAllowCancel.includes(playerCurrentStage) && (
+            <PlayerButton
+              tooltipTitle={playerCurrentStage === stageNames.lemat ? 'Turn off Lemat' : 'Cancel'}
+              onClick={() => moves.endStage()}
+            >
               <CancelIcon className='player-button-icon damage-icon' />
             </PlayerButton>
           )}
