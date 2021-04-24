@@ -1020,7 +1020,7 @@ const generalstore = (G: IGameState, ctx: Ctx) => {
   G.reactingOrder = [
     ...ctx.playOrder.slice(ctx.playOrderPos),
     ...ctx.playOrder.slice(0, ctx.playOrderPos),
-  ].filter(playerId => G.players[playerId].hp > 0);
+  ].filter(playerId => G.players[playerId].hp > 0 || isPlayerGhost(G.players[playerId]));
 };
 
 const pickCardFromGeneralStore = (
