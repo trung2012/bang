@@ -35,6 +35,7 @@ import {
   getPlayerIdsNotTarget,
   generatePlayersStages,
   isSuddenDeathOn,
+  canPlayerMakeMove,
 } from './utils';
 import { SelectedCards } from '../../context';
 import { cardsActivatingMollyStarkPower } from '../expansions';
@@ -1020,7 +1021,10 @@ const generalstore = (G: IGameState, ctx: Ctx) => {
   G.reactingOrder = [
     ...ctx.playOrder.slice(ctx.playOrderPos),
     ...ctx.playOrder.slice(0, ctx.playOrderPos),
-  ].filter(playerId => G.players[playerId].hp > 0 || isPlayerGhost(G.players[playerId]));
+  ].filter(playerId => {
+    const player = G.players[playerId];
+    return canPlayerMakeMove(player);
+  });
 };
 
 const pickCardFromGeneralStore = (

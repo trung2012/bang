@@ -14,6 +14,7 @@ import {
   isCharacterInGame,
   isJailed,
   isPlayerGhost,
+  canPlayerMakeMove,
   resetCardTimer,
   setVeraCusterStage,
 } from './utils';
@@ -37,7 +38,7 @@ const game: Game<IGameState> = {
     const sheriffPlayer = G.players[sheriffId!];
     const playersAlive = ctx.playOrder
       .map(id => G.players[id])
-      .filter(player => player.hp > 0 || isPlayerGhost(player));
+      .filter(player => canPlayerMakeMove(player));
 
     if (sheriffPlayer.hp <= 0) {
       if (playersAlive.length === 1 && playersAlive[0].role === 'renegade') {

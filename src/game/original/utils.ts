@@ -52,7 +52,7 @@ export const isCharacterInGame = (G: IGameState, characterName: CharacterName) =
 
   for (const playerId in G.players) {
     const player = G.players[playerId];
-    if (player.character.name === characterName && player.hp > 0) {
+    if (player.character.name === characterName && canPlayerMakeMove(player)) {
       if (matchingPlayerIds === undefined) {
         matchingPlayerIds = [playerId];
       } else {
@@ -87,7 +87,7 @@ export const generatePlayersStages = (players: IGamePlayer[], stageName: stageNa
 export const getOtherPlayersAlive = (G: IGameState, ctx: Ctx) => {
   return ctx.playOrder
     .map(id => G.players[id])
-    .filter(player => (player.hp > 0 || isPlayerGhost(player)) && player.id !== ctx.currentPlayer);
+    .filter(player => canPlayerMakeMove(player) && player.id !== ctx.currentPlayer);
 };
 
 export const shuffle = (ctx: Ctx, array: any[]) => {
@@ -362,7 +362,7 @@ export const getPlayerIdsNotTarget = (G: IGameState, ctx: Ctx, targetPlayerId: s
 export const getPlayersNotTargetPlayer = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   return ctx.playOrder
     .map(id => G.players[id])
-    .filter(player => player.hp > 0 && player.id !== targetPlayerId);
+    .filter(player => canPlayerMakeMove(player) && player.id !== targetPlayerId);
 };
 
 export const getPlayerWithSaved = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
@@ -388,12 +388,12 @@ export const checkIfAnyoneInStage = (
 };
 
 export const getPlayersAlive = (G: IGameState, ctx: Ctx) => {
-  return ctx.playOrder
-    .map(id => G.players[id])
-    .filter(player => player.hp > 0 || isPlayerGhost(player));
+  return ctx.playOrder.map(id => G.players[id]).filter(player => canPlayerMakeMove(player));
 };
 
 export const isSuddenDeathOn = (G: IGameState, ctx: Ctx) => {
   const playersAlive = getPlayersAlive(G, ctx);
   return playersAlive.length === 2;
 };
+
+export const canPlayerMakeMove = (player: IGamePlayer) => player.hp > 0 || isPlayerGhost(player);
