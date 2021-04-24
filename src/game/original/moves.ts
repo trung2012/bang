@@ -915,10 +915,10 @@ const gatling = (G: IGameState, ctx: Ctx) => {
 
   if (ctx.events?.setActivePlayers) {
     ctx.events?.setActivePlayers({
-      // currentPlayer: {
-      //   stage: stageNames.play,
-      //   moveLimit: 1,
-      // },
+      currentPlayer: {
+        stage: stageNames.play,
+        moveLimit: 1,
+      },
       value: activePlayers,
     });
   }
@@ -1486,6 +1486,9 @@ export const bandidos = (G: IGameState, ctx: Ctx) => {
 };
 
 export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+  const currentPlayer = G.players[ctx.currentPlayer];
+  const targetPlayer = G.players[targetPlayerId];
+
   let playerStages = {
     [targetPlayerId]: stageNames.reactToBangWithoutBang,
   };
@@ -1497,12 +1500,13 @@ export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   setActivePlayersStage(G, ctx, playerStages);
 
   const bangCard =
-    G.players[targetPlayerId].cardsInPlay.find(card => card.name === 'bang') ||
-    G.players[targetPlayerId].cardsInPlay[0];
+    targetPlayer.cardsInPlay.find(card => card.name === 'bang') || targetPlayer.cardsInPlay[0];
   ctx.effects.gunshot(bangCard.id);
+
+  currentPlayer.numBangsLeft -= 1;
 };
 
-export const tornado = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
+export const tornado = (G: IGameState, ctx: Ctx) => {
   const activePlayers = getOtherPlayersAliveStages(G, ctx, stageNames.tornado);
 
   for (const id in activePlayers) {

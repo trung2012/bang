@@ -65,6 +65,7 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
 
           if (firstTargetId === undefined) {
             moves.endStage();
+            setError('Something went wrong');
             return;
           }
 
@@ -74,8 +75,6 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
             firstTargetId,
             player.id
           );
-
-          if (player.hp <= 0) return;
 
           if (player.id === playerID) {
             setError(`Cannot bang yourself`);

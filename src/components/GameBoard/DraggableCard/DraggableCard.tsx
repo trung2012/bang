@@ -86,11 +86,6 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
       return;
     }
 
-    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
-      setError('Please draw first');
-      return;
-    }
-
     // Process moves when source player is different from target player
     if (stageName === stageNames.ragtime) {
       moves.panic(playerId, index, cardLocation);

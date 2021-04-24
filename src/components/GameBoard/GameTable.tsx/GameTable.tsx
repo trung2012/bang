@@ -69,11 +69,11 @@ export const GameTable = () => {
   useEffect(() => {
     if (ctx.phase === 'reselectCharacter' && isActive) {
       setModalContent({
-        title: 'Choose another character',
-        text: 'Do you want to play with another character?',
+        title: 'Character selection',
+        text: 'Do you want to keep this character?',
         buttons: [
-          { text: 'Yes', moveName: 'reselectCharacter' },
-          { text: 'No', moveName: 'endTurn' },
+          { text: 'Keep character', moveName: 'endTurn' },
+          { text: 'No, get a different one', moveName: 'reselectCharacter' },
         ],
       });
     }
