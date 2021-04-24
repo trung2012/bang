@@ -1,4 +1,4 @@
-import { IGamePlayerMap } from '../game';
+import { IGamePlayerMap, isPlayerGhost } from '../game';
 
 export const calculateDistanceFromTarget = (
   players: IGamePlayerMap,
@@ -6,7 +6,7 @@ export const calculateDistanceFromTarget = (
   sourcePlayerId: string,
   targetPlayerId: string
 ) => {
-  const playersAlive = playOrder.filter(id => players[id].hp > 0);
+  const playersAlive = playOrder.filter(id => players[id].hp > 0 || isPlayerGhost(players[id]));
   const currentPlayerIndex = playersAlive.findIndex(id => sourcePlayerId === id);
   const targetPlayerIndex = playersAlive.findIndex(id => targetPlayerId === id);
   let distance = Math.abs(currentPlayerIndex - targetPlayerIndex);

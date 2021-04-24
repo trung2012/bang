@@ -139,10 +139,15 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
       return;
     }
 
-    const numCardsToDiscard =
+    let numCardsToDiscard =
       player.character.name === 'sean mallory'
         ? player.hand.length - 10
         : player.hand.length - player.hp;
+
+    if (isPlayerGhost(player)) {
+      numCardsToDiscard = player.hand.length;
+    }
+
     if (numCardsToDiscard > 0) {
       setError(
         `Please discard ${numCardsToDiscard} card${
