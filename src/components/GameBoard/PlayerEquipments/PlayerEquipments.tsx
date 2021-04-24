@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useErrorContext, useGameContext } from '../../../context';
 import {
   delayBetweenActions,
@@ -22,7 +22,34 @@ export const PlayerEquipments: React.FC<IPlayerEquipments> = ({ playerId, equipm
   const { setError } = useErrorContext();
   const { players } = G;
   const cardLocation = 'equipment';
+  const clientPlayer = players[playerID!];
   const targetPlayer = players[playerId];
+  const playerCurrentStage = (ctx.activePlayers
+    ? ctx.activePlayers[playerID!]
+    : 'none') as stageNames;
+
+  useEffect(() => {
+    const barrelCard = clientPlayer.equipments.find(card => card.name === 'barrel');
+    if (
+      barrelCard !== undefined &&
+      ctx.activePlayers &&
+      (playerCurrentStage === stageNames.reactToGatling ||
+        playerCurrentStage === stageNames.reactToBang ||
+        playerCurrentStage === stageNames.reactToBangWithoutBang) &&
+      clientPlayer.barrelUseLeft > 0
+    ) {
+      setTimeout(() => {
+        moves.drawToReact(playerID);
+
+        setTimeout(() => {
+          moves.barrelResult(playerID, false);
+        }, delayBetweenActions);
+      }, delayBetweenActions);
+
+      return;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerCurrentStage]);
 
   const onEquipmentClick = (equipmentCard: ICard, index: number) => {
     if (!isActive || playerID === null) return;

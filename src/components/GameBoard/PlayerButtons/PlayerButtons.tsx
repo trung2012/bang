@@ -103,8 +103,10 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           break;
         }
       }
+    } else {
+      setModalContent(null);
     }
-  }, [moves, playerCurrentStage, playerID, setModalContent]);
+  }, [playerCurrentStage, playerID, setModalContent]);
 
   useEffect(() => {
     if (playerCurrentStage === stageNames.continueAfterHenryBlockBang) {
