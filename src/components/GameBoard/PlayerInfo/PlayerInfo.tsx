@@ -23,14 +23,15 @@ import './PlayerInfo.scss';
 import { Droppable } from 'react-dragtastic';
 import { calculateDistanceFromTarget } from '../../../utils';
 import { IDraggableCardData } from '../DraggableCard/DraggableCard.types';
+import { useModalContext } from '../../../context/modal';
 interface IPlayerInfoProps {
   player: IGamePlayer;
 }
 
 export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
   const { G, ctx, playerID, moves, isActive, playersInfo } = useGameContext();
-  const { setNotification } = useErrorContext();
-  const { setError } = useErrorContext();
+  const { setNotification, setError } = useErrorContext();
+  const { setModalContent } = useModalContext();
   const { selectedCards, setSelectedCards } = useCardsContext();
   const { players } = G;
   const isClientPlayer = player.id === playerID;
@@ -359,9 +360,18 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
       ctx.activePlayers[playerID] === stageNames.copyCharacter &&
       clientPlayer.character.realName === 'vera custer'
     ) {
-      setNotification('Please choose a character to copy their power');
+      setModalContent({
+        title: `Vera Custer power`,
+        text: `Click on someone to copy their power`,
+      });
     }
-  }, [clientPlayer.character.realName, ctx.activePlayers, playerID, setNotification]);
+  }, [
+    clientPlayer.character.realName,
+    ctx.activePlayers,
+    playerID,
+    setModalContent,
+    setNotification,
+  ]);
 
   if (player.hp <= 0 && !isGhost) {
     return (

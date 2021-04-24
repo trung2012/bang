@@ -27,7 +27,7 @@ const power = require('../../../assets/sounds/power.mp3');
 export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => {
   const [playPower] = useSound(power, { volume: 0.2 });
   const { G, ctx, moves, playerID, isActive } = useGameContext();
-  const { setError, setNotification } = useErrorContext();
+  const { setError } = useErrorContext();
   const { setModalContent } = useModalContext();
   const isClientPlayer = playerID === player.id;
   const isCurrentPlayer = isClientPlayer && player.id === ctx.currentPlayer;
@@ -44,11 +44,47 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
     if (playerCurrentStage) {
       switch (playerCurrentStage) {
         case stageNames.discardToPlayCard: {
-          setNotification('Please click on a card to discard and continue');
+          setModalContent({
+            title: `Discard a card`,
+            text: `Click on a card to discard and continue`,
+          });
           break;
         }
         case stageNames.clickToBang: {
-          setNotification('Please click on a player to bang');
+          setModalContent({
+            title: `Click someone to BANG`,
+            text: `Click on someone to BANG them`,
+          });
+          break;
+        }
+        case stageNames.reactToBang:
+        case stageNames.reactToBangWithoutBang:
+        case stageNames.reactToHenryBlockBang: {
+          setModalContent({
+            title: `Someone is BANGing you`,
+            text: `Play a MISSED (or equivalent) or take 1 damage`,
+          });
+          break;
+        }
+        case stageNames.reactToGatling: {
+          setModalContent({
+            title: `Someone played Gatling`,
+            text: `Play a MISSED (or equivalent) or take 1 damage`,
+          });
+          break;
+        }
+        case stageNames.reactToIndians: {
+          setModalContent({
+            title: `Someone played Indians`,
+            text: `Play a BANG or take 1 damage`,
+          });
+          break;
+        }
+        case stageNames.reactToRobbery: {
+          setModalContent({
+            title: `Someone is taking a card from you`,
+            text: `Click Pass if you cannot play anything to react`,
+          });
           break;
         }
         case stageNames.askLemonadeJim: {
@@ -62,9 +98,13 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           });
           break;
         }
+        default: {
+          setModalContent(null);
+          break;
+        }
       }
     }
-  }, [moves, playerCurrentStage, playerID, setModalContent, setNotification]);
+  }, [moves, playerCurrentStage, playerID, setModalContent]);
 
   useEffect(() => {
     if (playerCurrentStage === stageNames.continueAfterHenryBlockBang) {

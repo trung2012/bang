@@ -123,7 +123,7 @@ export const processCardRemoval = (
 };
 
 export const checkIfBeersCanSave = (G: IGameState, ctx: Ctx, targetPlayer: IGamePlayer) => {
-  if (isSuddenDeathOn(G, ctx)) {
+  if (!isSuddenDeathOn(G, ctx)) {
     const beerCardIndexes = targetPlayer.hand
       .map((card, index) => (card.name === 'beer' ? index : -1))
       .filter(index => index !== -1);
