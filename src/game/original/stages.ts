@@ -110,7 +110,7 @@ const stages: StageMap<IGameState> = {
       copyCharacter: moves.copyCharacter,
     },
   },
-  bandidos: {
+  [stageNames.bandidos]: {
     moves: {
       takeDamage: moves.takeDamage,
       discardToReact: moves.discardToReact,

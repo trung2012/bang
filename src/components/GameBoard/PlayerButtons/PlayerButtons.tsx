@@ -43,10 +43,26 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
   useEffect(() => {
     if (playerCurrentStage) {
       switch (playerCurrentStage) {
-        case stageNames.discardToPlayCard: {
+        case stageNames.discardToPlayCard:
+        case stageNames.poker:
+        case stageNames.tornado: {
           setModalContent({
             title: `Discard a card`,
             text: `Click on a card to discard and continue`,
+          });
+          break;
+        }
+        case stageNames.pickCardForPoker: {
+          setModalContent({
+            title: `Take up to 2 cards`,
+            text: `Click on a card to take it`,
+          });
+          break;
+        }
+        case stageNames.bandidos: {
+          setModalContent({
+            title: `Discard two cards`,
+            text: `Click on 2 cards to discard or take 1 damage to continue`,
           });
           break;
         }
@@ -126,6 +142,8 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           ],
         });
         return;
+      } else {
+        setModalContent(null);
       }
     }
   }, [G.henryBlockAfterEffects, isActive, moves, playerCurrentStage, setModalContent]);

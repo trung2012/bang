@@ -1541,7 +1541,10 @@ export const discardToReact = (
   const discardedCard = targetPlayer.hand.splice(targetCardIndex, 1)[0];
   if (!discardedCard) return INVALID_MOVE;
 
-  if (discardedCard.name === 'escape') {
+  if (
+    discardedCard.name === 'escape' ||
+    (targetPlayer.character.name === 'mick defender' && discardedCard.name === 'missed')
+  ) {
     endStage(G, ctx);
   }
 
@@ -1591,13 +1594,21 @@ export const discardForPoker = (
   const discardedCard = targetPlayer.hand.splice(targetCardIndex, 1)[0];
 
   if (discardedCard) {
-    G.generalStore.push(discardedCard);
+    if (
+      discardedCard.name === 'escape' ||
+      (targetPlayer.character.name === 'mick defender' && discardedCard.name === 'missed')
+    ) {
+      endStage(G, ctx);
+      moveToDiscard(G, ctx, discardedCard);
+    } else {
+      G.generalStore.push(discardedCard);
+    }
   }
 
   if (ctx.activePlayers && Object.keys(ctx.activePlayers).length === 1) {
     const wasAnyAceDiscarded = G.generalStore.some(card => card.value === 14);
 
-    if (!wasAnyAceDiscarded) {
+    if (G.generalStore.length > 0 && !wasAnyAceDiscarded) {
       if (ctx.events?.setActivePlayers) {
         ctx.events?.setActivePlayers({
           currentPlayer: stageNames.pickCardForPoker,
