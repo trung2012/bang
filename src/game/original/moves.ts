@@ -1156,6 +1156,7 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
   }
 
   resetDiscardStage(G, ctx);
+  emptyGeneralStore(G, ctx);
 };
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
