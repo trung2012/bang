@@ -12,12 +12,14 @@ const stages: StageMap<IGameState> = {
       endStage: moves.endStage,
       bang: moves.bang,
       heal: moves.heal,
+      discardFromHand: moves.discardFromHand,
     },
   },
   [stageNames.clickToBang]: {
     moves: {
       bangWithPower: moves.bangWithPower,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   joseDelgadoDiscard: {
@@ -25,12 +27,14 @@ const stages: StageMap<IGameState> = {
       discardToReact: moves.discardToReact,
       resetGameStage: moves.resetGameStage,
       clearCardsInPlay: moves.clearCardsInPlay,
+      discardFromHand: moves.discardFromHand,
     },
   },
   pickFromGeneralStore: {
     moves: {
       pickCardFromGeneralStore: moves.pickCardFromGeneralStore,
       clearCardsInPlay: moves.clearCardsInPlay,
+      discardFromHand: moves.discardFromHand,
     },
   },
   duel: {
@@ -39,6 +43,7 @@ const stages: StageMap<IGameState> = {
       takeDamage: moves.takeDamage,
       discardToReact: moves.discardToReact,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   reactToGatling: {
@@ -50,6 +55,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       discardToReact: moves.discardToReact,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   reactToIndians: {
@@ -59,6 +65,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       discardToReact: moves.discardToReact,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   reactToBang: {
@@ -69,6 +76,7 @@ const stages: StageMap<IGameState> = {
       takeDamage: moves.takeDamage,
       clearCardsInPlay: moves.clearCardsInPlay,
       setActivePlayersStage: moves.setActivePlayersStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   reactToBangWithoutBang: {
@@ -80,6 +88,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       discardToReact: moves.discardToReact,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   takeCardFromHand: {
@@ -116,28 +125,33 @@ const stages: StageMap<IGameState> = {
       discardToReact: moves.discardToReact,
       clearCardsInPlay: moves.clearCardsInPlay,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   fanning: {
     moves: {
       bang: moves.bang,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   tornado: {
     moves: {
       discardForTornado: moves.discardForTornado,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   poker: {
     moves: {
       discardForPoker: moves.discardForPoker,
+      discardFromHand: moves.discardFromHand,
     },
   },
   pickCardForPoker: {
     moves: {
       pickCardForPoker: moves.pickCardForPoker,
+      discardFromHand: moves.discardFromHand,
     },
   },
   lemat: {
@@ -155,6 +169,7 @@ const stages: StageMap<IGameState> = {
       discardToReact: moves.discardToReact,
       catbalou: moves.catbalou,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
   [stageNames.pickCardsForBrawl]: {
@@ -177,6 +192,7 @@ const stages: StageMap<IGameState> = {
       clearCardsInPlay: moves.clearCardsInPlay,
       discardToReact: moves.discardToReact,
       endStage: moves.endStage,
+      discardFromHand: moves.discardFromHand,
     },
   },
 };

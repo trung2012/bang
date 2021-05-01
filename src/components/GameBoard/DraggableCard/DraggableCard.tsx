@@ -377,7 +377,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
                 card={card}
                 isFacedUp={isFacedUp}
                 onContextMenu={onContextMenu}
-                onClick={stageName ? onCardClickToReact : onCardClickToPlay}
+                onClick={
+                  stageName && stageName !== stageNames.play
+                    ? onCardClickToReact
+                    : onCardClickToPlay
+                }
                 disabled={isCardDisabled}
               />
               {showCardOptions && (
