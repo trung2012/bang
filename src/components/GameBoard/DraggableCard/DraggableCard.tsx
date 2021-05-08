@@ -62,18 +62,11 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
 
   const onDiscardClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.stopPropagation();
-    if (doesPlayerNeedToDraw(clientPlayer, ctx)) {
-      setError('Please draw first');
-      return;
-    }
 
     if (playerID !== playerId) return;
 
-    if (
-      targetPlayer.character.name !== 'sid ketchum' &&
-      (!ctx.activePlayers || ctx.activePlayers[playerID] !== stageNames.discard)
-    ) {
-      setError('You can only discard cards at the end of your turn');
+    if (targetPlayer.character.name !== 'sid ketchum') {
+      setError('Only Sid Ketchum can discard this way');
       return;
     }
 

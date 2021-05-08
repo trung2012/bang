@@ -949,7 +949,9 @@ const panic = (
 
   const cardToTake = processCardRemoval(targetPlayer, targetCardIndex, type);
   resetCardTimer(cardToTake);
-  currentPlayer.hand.push(cardToTake);
+  if (cardToTake) {
+    currentPlayer.hand.push(cardToTake);
+  }
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
 
   endStage(G, ctx);
@@ -1398,7 +1400,9 @@ export const patBrennanEquipmentDraw = (
 
   const cardToTake = processCardRemoval(targetPlayer, targetCardIndex, type);
   resetCardTimer(cardToTake);
-  currentPlayer.hand.push(cardToTake);
+  if (cardToTake) {
+    currentPlayer.hand.push(cardToTake);
+  }
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
   currentPlayer.cardDrawnAtStartLeft = 0;
 
@@ -1536,12 +1540,16 @@ export const discardToReact = (
   targetCardIndex: number
 ) => {
   const targetPlayer = G.players[targetPlayerId];
+  const targetPlayerStage = (ctx.activePlayers
+    ? ctx.activePlayers[targetPlayerId]
+    : 'none') as stageNames;
   const discardedCard = targetPlayer.hand.splice(targetCardIndex, 1)[0];
   if (!discardedCard) return INVALID_MOVE;
 
   if (
     discardedCard.name === 'escape' ||
-    (targetPlayer.character.name === 'mick defender' && discardedCard.name === 'missed')
+    (targetPlayer.character.name === 'mick defender' && discardedCard.name === 'missed') ||
+    (targetPlayerStage === stageNames.bandidos && targetPlayer.hand.length === 0)
   ) {
     endStage(G, ctx);
   }
@@ -1716,7 +1724,9 @@ export const giveCardToRobber = (
 
   const cardToTake = processCardRemoval(targetPlayer, targetCardIndex, type);
   resetCardTimer(cardToTake);
-  robber.hand.push(cardToTake);
+  if (cardToTake) {
+    robber.hand.push(cardToTake);
+  }
   robber.hand = shuffle(ctx, robber.hand);
 
   endStage(G, ctx);

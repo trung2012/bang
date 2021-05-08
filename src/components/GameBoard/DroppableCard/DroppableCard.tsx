@@ -119,7 +119,7 @@ export const DroppableCardComponent: React.FC<IDroppableCardProps> = ({
         }, delayBetweenActions);
         return;
       } else {
-        if (targetPlayer.character.name === 'henry block') {
+        if (targetPlayer.character.name === 'henry block' && targetPlayer.id !== sourcePlayerId) {
           moves.henryBlockBang(
             sourcePlayerId,
             playerId,

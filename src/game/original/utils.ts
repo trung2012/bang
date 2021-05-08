@@ -9,7 +9,7 @@ import {
   characters_VOS,
 } from '../expansions';
 import { ExpansionName } from './config';
-import { charactersWithDrawPower, gunRange, stageNames } from './constants';
+import { gunRange, stageNames } from './constants';
 import {
   IGameState,
   IGamePlayer,
@@ -375,8 +375,7 @@ export const getPlayerWithSaved = (G: IGameState, ctx: Ctx, targetPlayerId: stri
 
 export const doesPlayerNeedToDraw = (player: IGamePlayer, ctx: Ctx) =>
   player.id === ctx.currentPlayer &&
-  player.cardDrawnAtStartLeft >= 2 &&
-  !charactersWithDrawPower.includes(player.character.name) &&
+  player.cardDrawnAtStartLeft > 0 &&
   !ctx.activePlayers?.[player.id];
 
 export const checkIfAnyoneInStage = (
