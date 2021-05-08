@@ -108,7 +108,7 @@ export const processCardRemoval = (
       break;
     case 'equipment':
       cardToDiscard = targetPlayer.equipments.splice(targetCardIndex, 1)[0];
-      let gunWithRange = gunRange[cardToDiscard.name];
+      let gunWithRange = gunRange[cardToDiscard.name ?? ''];
       if (gunWithRange) {
         targetPlayer.gunRange = 1;
         if (cardToDiscard.name === 'volcanic' && targetPlayer.character.name !== 'willy the kid') {
@@ -125,7 +125,7 @@ export const processCardRemoval = (
 };
 
 export const checkIfBeersCanSave = (G: IGameState, ctx: Ctx, targetPlayer: IGamePlayer) => {
-  if (!isSuddenDeathOn(G, ctx)) {
+  if (!isSuddenDeathOn(G, ctx) && !isPlayerGhost(targetPlayer)) {
     const beerCardIndexes = targetPlayer.hand
       .map((card, index) => (card.name === 'beer' ? index : -1))
       .filter(index => index !== -1);

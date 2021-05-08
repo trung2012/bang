@@ -704,9 +704,7 @@ const drawFromPlayerHand = (
 
   endStage(G, ctx);
 
-  if (G.henryBlockAfterEffects) {
-    resetHenryBlockEffects(G);
-  }
+  resetHenryBlockEffects(G);
 };
 
 const blackJackDraw = (G: IGameState, ctx: Ctx) => {
@@ -871,7 +869,7 @@ const beer = (G: IGameState, ctx: Ctx) => {
     }
   }
 
-  if (!isSuddenDeathOn(G, ctx) && beerCard.name === 'beer') {
+  if (!isSuddenDeathOn(G, ctx) && beerCard.name === 'beer' && !isPlayerGhost(currentPlayer)) {
     if (beerCard) {
       ctx.effects.beer(beerCard.id);
     }
@@ -901,9 +899,7 @@ const catbalou = (
     endStage(G, ctx);
   }
 
-  if (G.henryBlockAfterEffects) {
-    resetHenryBlockEffects(G);
-  }
+  resetHenryBlockEffects(G);
 };
 
 const gatling = (G: IGameState, ctx: Ctx) => {
@@ -958,9 +954,7 @@ const panic = (
 
   endStage(G, ctx);
 
-  if (G.henryBlockAfterEffects) {
-    resetHenryBlockEffects(G);
-  }
+  resetHenryBlockEffects(G);
 };
 
 const saloon = (G: IGameState, ctx: Ctx) => {
@@ -1157,6 +1151,7 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
 
   resetDiscardStage(G, ctx);
   emptyGeneralStore(G, ctx);
+  resetHenryBlockEffects(G);
 };
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
@@ -1370,7 +1365,9 @@ export const canteen = (G: IGameState, ctx: Ctx) => {
   const canteenCard = currentPlayer.cardsInPlay[0];
 
   ctx.effects.beer(canteenCard.id);
-  currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + 1);
+  if (!isPlayerGhost(currentPlayer)) {
+    currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + 1);
+  }
 };
 
 export const billNoFaceDraw = (G: IGameState, ctx: Ctx) => {
@@ -1405,9 +1402,7 @@ export const patBrennanEquipmentDraw = (
   currentPlayer.hand = shuffle(ctx, currentPlayer.hand);
   currentPlayer.cardDrawnAtStartLeft = 0;
 
-  if (G.henryBlockAfterEffects) {
-    resetHenryBlockEffects(G);
-  }
+  resetHenryBlockEffects(G);
 };
 
 export const joseDelgadoPower = (G: IGameState, ctx: Ctx) => {
@@ -1448,7 +1443,9 @@ export const equipOtherPlayer = (
 
 export const lastcall = (G: IGameState, ctx: Ctx) => {
   const currentPlayer = G.players[ctx.currentPlayer];
-  currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + 1);
+  if (!isPlayerGhost(currentPlayer)) {
+    currentPlayer.hp = Math.min(currentPlayer.maxHp, currentPlayer.hp + 1);
+  }
 };
 
 export const snakeResult = (G: IGameState, ctx: Ctx) => {
