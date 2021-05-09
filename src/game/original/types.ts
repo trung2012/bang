@@ -42,6 +42,10 @@ export interface IGameState {
     moveArgs: any[];
     type: RobbingType;
   };
+  fanningState?: {
+    firstTargetId: string;
+    validSecondTargetIds: string[]
+  }
 }
 
 export interface ICardToDiscard {

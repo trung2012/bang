@@ -357,6 +357,24 @@ export const isAnyPlayerWithinOneRange = (G: IGameState, ctx: Ctx, playerId: str
   return false;
 };
 
+export const getPlayersWithinOneRange = (G: IGameState, ctx: Ctx, playerId: string) => {
+  const playerIdsWithinOneRange: string[] = [];
+
+  for (const id of ctx.playOrder) {
+    const player = G.players[id];
+    if (playerId !== id && !isPlayerGhost(player) && player.hp > 0 && id !== ctx.currentPlayer) {
+      console.log(playerId, id, playerId === id)
+      const distance = calculateDistanceFromTarget(G.players, ctx.playOrder, playerId, id);
+
+      if (distance <= 1) {
+        playerIdsWithinOneRange.push(id);
+      };
+    }
+  }
+
+  return playerIdsWithinOneRange;
+}
+
 export const getPlayerIdsNotTarget = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   return ctx.playOrder.filter(id => id !== targetPlayerId);
 };

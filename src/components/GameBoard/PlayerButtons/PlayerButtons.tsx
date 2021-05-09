@@ -24,7 +24,7 @@ import useSound from 'use-sound';
 import { IModalButton, useModalContext } from '../../../context/modal';
 const power = require('../../../assets/sounds/power.mp3');
 
-export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => {
+export const PlayerButtonsComponent: React.FC<{ player: IGamePlayer }> = ({ player }) => {
   const [playPower] = useSound(power, { volume: 0.2 });
   const { G, ctx, moves, playerID, isActive } = useGameContext();
   const { setError } = useErrorContext();
@@ -66,7 +66,8 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
           });
           break;
         }
-        case stageNames.clickToBang: {
+        case stageNames.clickToBang:
+        case stageNames.fanning: {
           setModalContent({
             title: `Click someone to BANG`,
             text: `Click on someone to BANG them`,
@@ -361,3 +362,5 @@ export const PlayerButtons: React.FC<{ player: IGamePlayer }> = ({ player }) => 
     </div>
   );
 };
+
+export const PlayerButtons = React.memo(PlayerButtonsComponent);

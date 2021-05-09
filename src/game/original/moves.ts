@@ -27,7 +27,7 @@ import {
   processHerbHunterPower,
   hasBounty,
   hasShotgun,
-  isAnyPlayerWithinOneRange,
+  getPlayersWithinOneRange,
   isPlayerGhost,
   hasSnake,
   hasActiveSnake,
@@ -1154,7 +1154,12 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
   resetDiscardStage(G, ctx);
   emptyGeneralStore(G, ctx);
   resetHenryBlockEffects(G);
+  resetFanningState(G);
 };
+
+export const resetFanningState = (G: IGameState) => {
+  G.fanningState = undefined;
+}
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
   if (ctx.events?.setActivePlayers) {
@@ -1495,8 +1500,15 @@ export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
     [targetPlayerId]: stageNames.reactToBangWithoutBang,
   };
 
-  if (isAnyPlayerWithinOneRange(G, ctx, targetPlayerId)) {
+  const playerIdsWithinOneRangeOfTarget = getPlayersWithinOneRange(G, ctx, targetPlayerId);
+  
+  if (playerIdsWithinOneRangeOfTarget?.length) {
     playerStages[ctx.currentPlayer] = stageNames.fanning;
+  }
+
+  G.fanningState = {
+    firstTargetId: targetPlayerId,
+    validSecondTargetIds: playerIdsWithinOneRangeOfTarget
   }
 
   setActivePlayersStage(G, ctx, playerStages);

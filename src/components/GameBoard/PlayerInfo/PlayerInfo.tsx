@@ -56,33 +56,21 @@ export const PlayerInfo: React.FC<IPlayerInfoProps> = ({ player }) => {
 
       switch (clientPlayerStage) {
         case stageNames.fanning: {
-          const firstTargetId = ctx.playOrder.find(
-            id =>
-              ctx.activePlayers !== null &&
-              (ctx.activePlayers[id] === stageNames.reactToBang ||
-                ctx.activePlayers[id] === stageNames.reactToBangWithoutBang)
-          );
+          const { firstTargetId, validSecondTargetIds } = G.fanningState ?? {};
 
-          if (firstTargetId === undefined) {
+          if (!firstTargetId || !validSecondTargetIds) {
             moves.endStage();
-            setError('Something went wrong');
+            setError('Cannot find the first target');
             return;
           }
-
-          const distanceFromFirstTarget = calculateDistanceFromTarget(
-            players,
-            ctx.playOrder,
-            firstTargetId,
-            player.id
-          );
 
           if (player.id === playerID) {
             setError(`Cannot bang yourself`);
             return;
           }
 
-          if (distanceFromFirstTarget > 1) {
-            setError('Target is not within 1 distance. Please choose a different target');
+          if (!validSecondTargetIds.includes(player.id)) {
+            setError('Invalid target. Please choose a different target');
             return;
           }
 
