@@ -353,7 +353,12 @@ const DraggableCardComponent: React.FC<IDraggableCardProps> = ({
         }}
       >
         {draggableDragState => (
-          <Tippy delay={[500, 0]} content={`${getCardInstructions(card)}`}>
+          <Tippy
+            delay={[500, 0]}
+            content={`${getCardInstructions(card)}${
+              clientPlayer.character.name === 'sid ketchum' && `. Right click to discard`
+            }`}
+          >
             <DraggableCardContainer
               className={classnames({
                 'draggable-card': !isSelected,

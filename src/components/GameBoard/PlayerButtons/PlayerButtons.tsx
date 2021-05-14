@@ -31,9 +31,9 @@ export const PlayerButtonsComponent: React.FC<{ player: IGamePlayer }> = ({ play
   const { setModalContent } = useModalContext();
   const isClientPlayer = playerID === player.id;
   const isCurrentPlayer = isClientPlayer && player.id === ctx.currentPlayer;
-  const playerCurrentStage = (ctx.activePlayers
-    ? ctx.activePlayers[playerID!]
-    : 'none') as stageNames;
+  const playerCurrentStage = (
+    ctx.activePlayers ? ctx.activePlayers[playerID!] : 'none'
+  ) as stageNames;
   const isReactingToBullets =
     ctx.activePlayers !== null &&
     !!ctx.activePlayers[playerID!] &&
@@ -79,14 +79,14 @@ export const PlayerButtonsComponent: React.FC<{ player: IGamePlayer }> = ({ play
         case stageNames.reactToHenryBlockBang: {
           setModalContent({
             title: `Someone is BANGing you`,
-            text: `Play a MISSED (or equivalent) or take 1 damage`,
+            text: `Play a MISSED (or equivalent) or take 1 damage. If you have a Barrel, click on it to activate`,
           });
           break;
         }
         case stageNames.reactToGatling: {
           setModalContent({
             title: `Someone played Gatling`,
-            text: `Play a MISSED (or equivalent) or take 1 damage`,
+            text: `Play a MISSED (or equivalent) or take 1 damage. If you have a Barrel, click on it to activate`,
           });
           break;
         }

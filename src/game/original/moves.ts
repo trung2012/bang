@@ -58,9 +58,9 @@ const takeDamage = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   clearCardsInPlay(G, ctx, currentPlayer.id);
   const doesCurrentPlayerHasShotgun = hasShotgun(currentPlayer);
   const cardCausingDamage = targetPlayer.cardsInPlay[0];
-  const targetPlayerStage = (ctx.activePlayers
-    ? ctx.activePlayers[targetPlayerId]
-    : 'none') as stageNames;
+  const targetPlayerStage = (
+    ctx.activePlayers ? ctx.activePlayers[targetPlayerId] : 'none'
+  ) as stageNames;
 
   ctx.effects.takeDamage();
   targetPlayer.hp -= 1;
@@ -1055,7 +1055,6 @@ const duel = (G: IGameState, ctx: Ctx, targetPlayerId: string, sourcePlayerId: s
       value: {
         [targetPlayerId]: stageNames.duel,
       },
-      moveLimit: 1,
     });
   }
 };
@@ -1159,7 +1158,7 @@ export const endTurn = (G: IGameState, ctx: Ctx) => {
 
 export const resetFanningState = (G: IGameState) => {
   G.fanningState = undefined;
-}
+};
 
 export const makePlayerDiscard = (G: IGameState, ctx: Ctx, numCardsToDiscard: number) => {
   if (ctx.events?.setActivePlayers) {
@@ -1501,15 +1500,15 @@ export const fanning = (G: IGameState, ctx: Ctx, targetPlayerId: string) => {
   };
 
   const playerIdsWithinOneRangeOfTarget = getPlayersWithinOneRange(G, ctx, targetPlayerId);
-  
+
   if (playerIdsWithinOneRangeOfTarget?.length) {
     playerStages[ctx.currentPlayer] = stageNames.fanning;
   }
 
   G.fanningState = {
     firstTargetId: targetPlayerId,
-    validSecondTargetIds: playerIdsWithinOneRangeOfTarget
-  }
+    validSecondTargetIds: playerIdsWithinOneRangeOfTarget,
+  };
 
   setActivePlayersStage(G, ctx, playerStages);
 
@@ -1552,9 +1551,9 @@ export const discardToReact = (
   targetCardIndex: number
 ) => {
   const targetPlayer = G.players[targetPlayerId];
-  const targetPlayerStage = (ctx.activePlayers
-    ? ctx.activePlayers[targetPlayerId]
-    : 'none') as stageNames;
+  const targetPlayerStage = (
+    ctx.activePlayers ? ctx.activePlayers[targetPlayerId] : 'none'
+  ) as stageNames;
   const discardedCard = targetPlayer.hand.splice(targetCardIndex, 1)[0];
   if (!discardedCard) return INVALID_MOVE;
 

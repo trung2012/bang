@@ -113,7 +113,6 @@ export const characters: ICharacter[] = [
       'At any time, he may discard 2 cards from his hand to regain one life point. If he is willing and able, he can use this ability more than once at a time. But remember: you cannot have more life points than your starting amount!',
     imageUrl:
       'https://res.cloudinary.com/trungpham/image/upload/v1602888948/bang/original/sidketchum_o4uwhe.png',
-    hasActivePower: true,
   },
   {
     name: 'slab the killer',
